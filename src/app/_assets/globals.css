@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+ 
+body {
+  background: var(--tg-theme-secondary-bg-color, white);
+}
+.transition-opacity {
+  transition: opacity 1.33s ease;
+}
