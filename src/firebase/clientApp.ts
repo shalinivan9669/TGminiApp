@@ -1,10 +1,12 @@
-// src/firebase/clientApp.ts
+// src/core/firebase/clientApp.ts
 'use client';
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAnalytics } from 'firebase/analytics';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth'; // Импортируем getAuth
 
- 
+// Ваши Firebase-конфигурации из .env.local
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -24,4 +26,11 @@ if (typeof window !== 'undefined') {
   analytics = getAnalytics(app);
 }
 
-export { app, analytics };
+// Инициализация Firestore
+const db = getFirestore(app);
+
+// Инициализация Authentication
+const auth = getAuth(app);
+
+// Экспортируем необходимые объекты
+export { app, analytics, db, auth };

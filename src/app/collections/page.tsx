@@ -133,3 +133,4 @@ const Collections: React.FC = () => {
 };
 
 export default Collections;
+ 

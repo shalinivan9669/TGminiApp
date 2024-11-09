@@ -1,6 +1,4 @@
-// src/app/components/Filters/Filters.tsx
-'use client';
-
+// src/components/Filters.tsx
 import React from 'react';
 
 interface FiltersProps {
@@ -11,12 +9,12 @@ interface FiltersProps {
 
 const Filters: React.FC<FiltersProps> = ({ options, selectedOption, onFilterChange }) => {
   return (
-    <div className="flex space-x-4 mb-4">
+    <div className="flex space-x-2 mt-4">
       {options.map((option) => (
         <button
           key={option}
-          className={`py-1 px-3 rounded-full text-sm ${
-            selectedOption === option ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
+          className={`py-1 px-3 rounded ${
+            selectedOption === option ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'
           }`}
           onClick={() => onFilterChange(option)}
         >

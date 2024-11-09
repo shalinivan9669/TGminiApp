@@ -1,20 +1,20 @@
 // src/components/CharacterCard.tsx
 import React from 'react';
+import { Game } from '@/types';
 
 interface CharacterCardProps {
-  imageUrl: string;
-  name: string;
-  description: string;
+  game: Game;
 }
 
-const CharacterCard: React.FC<CharacterCardProps> = ({ imageUrl, name, description }) => {
+const CharacterCard: React.FC<CharacterCardProps> = ({ game }) => {
   return (
-    <div className="bg-white dark:bg-gray-700 shadow-md rounded-lg overflow-hidden">
-      <img src={imageUrl} alt={name} className="w-full h-48 object-cover" />
-      <div className="p-4">
-        <h3 className="text-lg font-semibold">{name}</h3>
-        <p className="text-gray-600 dark:text-gray-300">{description}</p>
-      </div>
+    <div className="flex flex-col items-center">
+      <img src={game.imageUrl || '/images/game_placeholder.jpg'} alt={game.name} className="w-32 h-32 object-cover rounded-full mb-4" />
+      <h3 className="text-lg font-semibold">{game.name}</h3>
+      <p className="text-gray-600">{game.description}</p>
+      <p className="mt-2">Ставка: {game.betAmount} ETH</p>
+      <p className="mt-1">Статус: {game.status}</p>
+      {game.status === 'active' && <p>Текущий раунд: {game.rounds.length + 1}</p>}
     </div>
   );
 };

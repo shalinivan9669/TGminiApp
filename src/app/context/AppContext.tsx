@@ -1,37 +1,36 @@
 // src/app/context/AppContext.tsx
-'use client';
-
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface AppContextProps {
-  user: string | null;
-  setUser: (user: string | null) => void;
   activeTab: string;
-  setActiveTab: (tab: string) => void;
+  setActiveTab: React.Dispatch<React.SetStateAction<string>>;
   selectedFilter: string;
-  setSelectedFilter: (filter: string) => void;
+  setSelectedFilter: React.Dispatch<React.SetStateAction<string>>;
 }
 
-const AppContext = createContext<AppContextProps | undefined>(undefined);
+const AppContext = createContext<AppContextProps>({
+  activeTab: 'Поиск',
+  setActiveTab: () => {},
+  selectedFilter: 'Все',
+  setSelectedFilter: () => {},
+});
 
-interface AppProviderProps {
-  children: ReactNode;
-}
-
-export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>('Все');
+export const AppProvider = ({ children }: { children: ReactNode }) => {
+  const [activeTab, setActiveTab] = useState<string>('Поиск');
   const [selectedFilter, setSelectedFilter] = useState<string>('Все');
 
   return (
-    <AppContext.Provider value={{ user, setUser, activeTab, setActiveTab, selectedFilter, setSelectedFilter }}>
+    <AppContext.Provider
+      value={{
+        activeTab,
+        setActiveTab,
+        selectedFilter,
+        setSelectedFilter,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );
 };
 
-export const useAppContext = () => {
-  const context = useContext(AppContext);
-  if (!context) throw new Error('useAppContext must be used within AppProvider');
-  return context;
-};
+export const useAppContext = () => useContext(AppContext);

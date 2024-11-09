@@ -1,6 +1,6 @@
 // src/pages/api/addCollection.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '@/firebase/adminApp';
+import { admin, db } from '@/firebase/adminApp';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
