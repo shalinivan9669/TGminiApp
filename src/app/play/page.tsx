@@ -7,11 +7,17 @@ import Tabs from '@/components/Tabs';
 import Filters from '@/components/Filters';
 import CreateGameButton from '@/components/Buttons/CreateGameButton';
 import JoinGameButton from '@/components/Buttons/JoinGameButton';
-import { useAppContext } from '@/context/AppContext';
+import { useAppContext } from '@/app/context/AppContext';
 import { db } from '@/firebase/clientApp';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { Game } from '@/types';
 import { useRouter } from 'next/navigation';
+
+// Расширенный интерфейс для игр с 'id' и 'filter'
+interface GameWithId extends Game {
+  id: string;
+  filter?: string;
+}
 
 const Play: React.FC = () => {
   const { activeTab, setActiveTab, selectedFilter, setSelectedFilter, user } = useAppContext();
@@ -21,9 +27,9 @@ const Play: React.FC = () => {
   const filters = ['Все', 'Фильтр A', 'Фильтр B', 'Фильтр C'];
 
   // Состояния для разных типов игр
-  const [openGames, setOpenGames] = useState<Game[]>([]);
-  const [activeGames, setActiveGames] = useState<Game[]>([]);
-  const [gameHistory, setGameHistory] = useState<Game[]>([]);
+  const [openGames, setOpenGames] = useState<GameWithId[]>([]);
+  const [activeGames, setActiveGames] = useState<GameWithId[]>([]);
+  const [gameHistory, setGameHistory] = useState<GameWithId[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
 
@@ -36,10 +42,26 @@ const Play: React.FC = () => {
     const unsubscribeOpen = onSnapshot(
       openGamesQuery,
       (snapshot) => {
-        const games = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Game[];
+        const games: GameWithId[] = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name,
+            description: data.description,
+            imageUrl: data.imageUrl,
+            betAmount: data.betAmount,
+            status: data.status,
+            rounds: data.rounds || [],
+            players: data.players || [],
+            finalResult: data.finalResult,
+            filter: data.filter, // Добавлено для фильтрации
+            player1: data.player1,
+            player2: data.player2,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+            // Добавьте другие свойства, если необходимо
+          };
+        });
         setOpenGames(games);
         setLoading(false);
       },
@@ -60,10 +82,26 @@ const Play: React.FC = () => {
       const unsubscribeActive = onSnapshot(
         activeGamesQuery,
         (snapshot) => {
-          const games = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          })) as Game[];
+          const games: GameWithId[] = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              name: data.name,
+              description: data.description,
+              imageUrl: data.imageUrl,
+              betAmount: data.betAmount,
+              status: data.status,
+              rounds: data.rounds || [],
+              players: data.players || [],
+              finalResult: data.finalResult,
+              filter: data.filter, // Добавлено для фильтрации
+              player1: data.player1,
+              player2: data.player2,
+              createdAt: data.createdAt,
+              updatedAt: data.updatedAt,
+              // Добавьте другие свойства, если необходимо
+            };
+          });
           setActiveGames(games);
           setLoading(false);
         },
@@ -83,10 +121,26 @@ const Play: React.FC = () => {
       const unsubscribeHistory = onSnapshot(
         historyGamesQuery,
         (snapshot) => {
-          const games = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          })) as Game[];
+          const games: GameWithId[] = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              name: data.name,
+              description: data.description,
+              imageUrl: data.imageUrl,
+              betAmount: data.betAmount,
+              status: data.status,
+              rounds: data.rounds || [],
+              players: data.players || [],
+              finalResult: data.finalResult,
+              filter: data.filter, // Добавлено для фильтрации
+              player1: data.player1,
+              player2: data.player2,
+              createdAt: data.createdAt,
+              updatedAt: data.updatedAt,
+              // Добавьте другие свойства, если необходимо
+            };
+          });
           setGameHistory(games);
           setLoading(false);
         },
@@ -143,7 +197,14 @@ const Play: React.FC = () => {
             ) : (
               filteredGames.map((game) => (
                 <div key={game.id} className="border border-gray-300 p-4 rounded-lg shadow">
-                  <CharacterCard game={game} />
+                  <CharacterCard
+                    imageUrl={game.imageUrl}
+                    name={game.name}
+                    description={game.description}
+                    betAmount={game.betAmount}
+                    status={game.status}
+                    rounds={game.rounds}
+                  />
                   {activeTab === 'Поиск' && <JoinGameButton game={game} />}
                 </div>
               ))

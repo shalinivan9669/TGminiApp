@@ -32,3 +32,10 @@ export interface Collection {
   name: string;
   description: string;
 }
+
+export interface Character {
+  imageUrl: string;
+  name: string;
+  description: string;
+  // Добавьте другие свойства, если необходимо
+}

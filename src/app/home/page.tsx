@@ -1,3 +1,4 @@
+// src/app/home/page.tsx
 'use client';
 
 import React from 'react';
@@ -5,6 +6,7 @@ import CharacterCard from '@/components/CharacterCard';
 import Tabs from '@/components/Tabs';
 import Filters from '@/components/Filters';
 import { useAppContext } from '../context/AppContext';
+import { Character } from '@/types'; // Определите интерфейс, если его ещё нет
 
 const Home: React.FC = () => {
   const { activeTab, setActiveTab, selectedFilter, setSelectedFilter } = useAppContext();
@@ -12,7 +14,7 @@ const Home: React.FC = () => {
   const tabs = ['Все', 'Новые', 'Популярные'];
   const filters = ['Фильтр 1', 'Фильтр 2', 'Фильтр 3'];
 
-  const characters = [
+  const characters: Character[] = [
     {
       imageUrl: '/images/character1.jpg',
       name: 'Персонаж 1',
@@ -38,6 +40,10 @@ const Home: React.FC = () => {
               imageUrl={character.imageUrl}
               name={character.name}
               description={character.description}
+              // Если есть, передайте дополнительные пропсы:
+              // betAmount={character.betAmount}
+              // status={character.status}
+              // rounds={character.rounds}
             />
           ))}
         </div>

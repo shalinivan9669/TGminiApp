@@ -17,7 +17,13 @@ const Collections: React.FC = () => {
   const filters = ['Рейтинг > 4', 'Новые', 'Популярные'];
 
   const collections: Collection[] = [
-    // Пустой массив для тестирования
+    // Пример заполненного массива
+    {
+      imageUrl: '/images/collection1.jpg',
+      name: 'Коллекция 1',
+      description: 'Описание коллекции 1.',
+      // Добавьте другие свойства, если они есть
+    },
     // Добавьте больше коллекций по необходимости
   ];
 
@@ -68,6 +74,10 @@ const Collections: React.FC = () => {
                 imageUrl={collection.imageUrl}
                 name={collection.name}
                 description={collection.description}
+                // Если есть, передайте дополнительные пропсы:
+                // betAmount={collection.betAmount}
+                // status={collection.status}
+                // rounds={collection.rounds}
               />
             ))}
           </div>
