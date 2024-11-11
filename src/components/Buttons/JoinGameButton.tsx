@@ -1,12 +1,17 @@
 // src/components/Buttons/JoinGameButton.tsx
 import React, { useState } from 'react';
-import { Game } from '@/types';
+import { Game as GameType } from '@/types';
 import Modal from '@/components/UI/Modal';
 import { useAppContext } from '@/app/context/AppContext';
 import { useRouter } from 'next/navigation';
 
+// Создайте новый интерфейс, добавив свойство 'id'
+interface GameWithId extends GameType {
+  id: string;
+}
+
 interface JoinGameButtonProps {
-  game: Game;
+  game: GameWithId;
 }
 
 const JoinGameButton: React.FC<JoinGameButtonProps> = ({ game }) => {
@@ -17,6 +22,11 @@ const JoinGameButton: React.FC<JoinGameButtonProps> = ({ game }) => {
   const [error, setError] = useState<string>('');
 
   const handleJoinGame = async () => {
+    if (!user) {
+      setError('Пользователь не авторизован.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -28,9 +38,9 @@ const JoinGameButton: React.FC<JoinGameButtonProps> = ({ game }) => {
         },
         body: JSON.stringify({
           gameId: game.id,
-          userId: user?.id,
-          telegramId: user?.telegramId,
-          username: user?.username,
+          userId: user.id,
+          telegramId: user.telegramId,
+          username: user.username,
         }),
       });
 
@@ -39,6 +49,7 @@ const JoinGameButton: React.FC<JoinGameButtonProps> = ({ game }) => {
         throw new Error(data.message || 'Не удалось присоединиться к игре');
       }
 
+      // Предполагается, что сервер возвращает данные игры
       const data = await response.json();
       setIsModalOpen(false);
       router.push(`/play/${game.id}`);

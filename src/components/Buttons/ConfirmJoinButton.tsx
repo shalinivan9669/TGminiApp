@@ -1,13 +1,17 @@
 // src/components/Buttons/ConfirmJoinButton.tsx
-import React from 'react';
-import { Game } from '@/types';
+import React, { useState } from 'react';
+import { Game as GameType } from '@/types';
 import { useAppContext } from '@/app/context/AppContext';
 import Modal from '@/components/UI/Modal';
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+// Создайте новый интерфейс, добавив свойство 'id'
+interface GameWithId extends GameType {
+  id: string;
+}
+
 interface ConfirmJoinButtonProps {
-  game: Game;
+  game: GameWithId;
 }
 
 const ConfirmJoinButton: React.FC<ConfirmJoinButtonProps> = ({ game }) => {
@@ -18,6 +22,11 @@ const ConfirmJoinButton: React.FC<ConfirmJoinButtonProps> = ({ game }) => {
   const [error, setError] = useState<string>('');
 
   const handleConfirmJoin = async () => {
+    if (!user) {
+      setError('Пользователь не авторизован.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -29,9 +38,9 @@ const ConfirmJoinButton: React.FC<ConfirmJoinButtonProps> = ({ game }) => {
         },
         body: JSON.stringify({
           gameId: game.id,
-          userId: user?.id,
-          telegramId: user?.telegramId,
-          username: user?.username,
+          userId: user.id,
+          telegramId: user.telegramId,
+          username: user.username,
         }),
       });
 
@@ -40,6 +49,7 @@ const ConfirmJoinButton: React.FC<ConfirmJoinButtonProps> = ({ game }) => {
         throw new Error(data.message || 'Не удалось присоединиться к игре');
       }
 
+      // Предполагается, что сервер возвращает данные игры
       const data = await response.json();
       setIsModalOpen(false);
       router.push(`/play/${game.id}`);

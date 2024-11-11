@@ -16,7 +16,7 @@ export interface Game {
 
 export interface Player {
   userId: string;
-  telegramId: number;
+  telegramId: string | number;
   username: string;
 }
 
@@ -39,3 +39,6 @@ export interface Character {
   description: string;
   // Добавьте другие свойства, если необходимо
 }
+
+
+

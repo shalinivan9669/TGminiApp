@@ -16,8 +16,8 @@ const RoundsList: React.FC<RoundsListProps> = ({ rounds }) => {
         rounds.map((round) => (
           <div key={round.roundNumber} className="border p-2 rounded mt-2">
             <p>Раунд {round.roundNumber}</p>
-            <p>Ваш ход: {round.playerMove || '—'}</p>
-            <p>Ход противника: {round.opponentMove || '—'}</p>
+            <p>Ваш ход: {round.player1Move || '—'}</p>
+            <p>Ход противника: {round.player2Move || '—'}</p>
             <p>Результат: {round.result || '—'}</p>
           </div>
         ))
