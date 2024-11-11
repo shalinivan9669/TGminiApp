@@ -1,30 +1,12 @@
 // src/components/GameRound.tsx
 import React, { useState } from 'react';
-import { db } from '@/firebase/adminApp';
-import { doc, updateDoc, arrayUnion, FieldValue } from 'firebase-admin/firestore';
+import { db } from '@/firebase/clientApp'; // Используем клиентский SDK
+import { doc, updateDoc, serverTimestamp, getDoc, FieldValue } from 'firebase/firestore';
 import { useAppContext } from '@/app/context/AppContext';
-
-interface Game {
-  id: string;
-  player1: {
-    userId: string;
-    telegramId: string;
-    username: string;
-  };
-  player2: {
-    userId: string;
-    telegramId: string;
-    username: string;
-  };
-  betAmount: number;
-  status: string;
-  rounds: any[];
-  createdAt: any;
-  updatedAt: any;
-}
+import { GameWithId } from '@/types'; // Импортируем интерфейс GameWithId
 
 interface GameRoundProps {
-  game: Game;
+  game: GameWithId;
   currentPlayer: 'player1' | 'player2';
 }
 
@@ -44,6 +26,7 @@ const GameRound: React.FC<GameRoundProps> = ({ game, currentPlayer }) => {
     setError('');
 
     try {
+      // Находим индекс первого незавершенного раунда
       const roundIndex = game.rounds.findIndex(round => !round.result);
       if (roundIndex === -1) {
         setError('Все раунды уже завершены.');
@@ -52,23 +35,29 @@ const GameRound: React.FC<GameRoundProps> = ({ game, currentPlayer }) => {
 
       const gameRef = doc(db, 'games', game.id);
       const moveField = currentPlayer === 'player1' ? 'player1Move' : 'player2Move';
-      const updateData = {
+      
+      // Обновляем ход текущего игрока
+      const updateData: Partial<GameWithId> & { updatedAt: FieldValue } = {
         [`rounds.${roundIndex}.${moveField}`]: move,
-        updatedAt: FieldValue.serverTimestamp(),
+        updatedAt: serverTimestamp(),
       };
 
       await updateDoc(gameRef, updateData);
 
-      // Проверка, если оба игрока сделали ход, определить результат
-      const gameSnap = await gameRef.get();
-      const updatedGame = gameSnap.data() as Game;
+      // Получаем обновленные данные игры
+      const gameSnap = await getDoc(gameRef);
+      if (!gameSnap.exists()) {
+        throw new Error('Игра не существует.');
+      }
+      const updatedGame = gameSnap.data() as GameWithId;
       const currentRound = updatedGame.rounds[roundIndex];
 
+      // Если оба игрока сделали ход, определяем результат
       if (currentRound.player1Move && currentRound.player2Move) {
         const result = determineRoundResult(currentRound.player1Move, currentRound.player2Move);
         await updateDoc(gameRef, {
           [`rounds.${roundIndex}.result`]: result,
-          updatedAt: FieldValue.serverTimestamp(),
+          updatedAt: serverTimestamp(),
         });
 
         // Отправка уведомлений о результате раунда
@@ -88,21 +77,28 @@ const GameRound: React.FC<GameRoundProps> = ({ game, currentPlayer }) => {
     }
   };
 
-  const determineRoundResult = (p1: string, p2: string): string => {
-    if (p1 === p2) return 'tie';
+  // Функция для определения результата раунда
+  const determineRoundResult = (
+    p1: 'rock' | 'paper' | 'scissors',
+    p2: 'rock' | 'paper' | 'scissors'
+  ): 'player1' | 'player2' | 'draw' => {
+    if (p1 === p2) return 'draw';
     if (
       (p1 === 'rock' && p2 === 'scissors') ||
       (p1 === 'paper' && p2 === 'rock') ||
       (p1 === 'scissors' && p2 === 'paper')
     ) {
-      return 'player1Win';
+      return 'player1';
     }
-    return 'player2Win';
+    return 'player2';
   };
+
+  // Определяем номер текущего раунда для отображения
+  const currentRoundNumber = game.rounds.findIndex(round => !round.result) + 1;
 
   return (
     <div className="p-4 border rounded-lg mt-4">
-      <h3 className="text-lg font-semibold mb-2">Раунд {game.rounds.findIndex(round => !round.result) + 1}</h3>
+      <h3 className="text-lg font-semibold mb-2">Раунд {currentRoundNumber}</h3>
       {error && <p className="text-red-500 mb-2">{error}</p>}
       <div className="flex space-x-4 mb-4">
         <button

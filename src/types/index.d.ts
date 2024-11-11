@@ -1,4 +1,6 @@
 // src/types/index.ts
+import { Timestamp, FieldValue } from 'firebase/firestore';
+
 export interface Game {
   name: string;
   description: string;
@@ -7,10 +9,10 @@ export interface Game {
   betAmount: number;
   status: 'open' | 'active' | 'completed';
   rounds: Round[];
-  player1: Player;
-  player2?: Player;
-  createdAt: FirebaseFirestore.Timestamp;
-  updatedAt: FirebaseFirestore.Timestamp;
+  player1: PlayerWithStringTelegramId;
+  player2?: PlayerWithStringTelegramId;
+  createdAt: Timestamp;
+  updatedAt: Timestamp | FieldValue; // Обновлено
   finalResult?: string;
 }
 
@@ -42,3 +44,13 @@ export interface Character {
 
 
 
+
+export interface GameWithId extends Game {
+  id: string;
+  player1: PlayerWithStringTelegramId;
+  player2?: PlayerWithStringTelegramId;
+}
+
+export interface PlayerWithStringTelegramId extends Player {
+  telegramId: string; // Строго string после преобразования
+}
