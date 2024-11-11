@@ -1,25 +1,15 @@
 // src/components/ActiveGamesList.tsx
 import React, { useEffect, useState } from 'react';
-import { db } from '@/firebase/adminApp';
+import { db } from '@/firebase/clientApp'; // Убедитесь, что используете клиентский SDK
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { useAppContext } from '@/app/context/AppContext';
 import GameRound from '@/components/GameRound';
 import ConfirmJoinButton from '@/components/Buttons/ConfirmJoinButton';
-import { Game as GameType, Round } from '@/types'; // Импортируем необходимые интерфейсы
+import { Game as GameType, Player } from '@/types'; // Импортируем необходимые интерфейсы
 
-// Переопределяем интерфейс Player с telegramId типа string
-interface PlayerWithStringTelegramId {
-  userId: string;
-  telegramId: string | number;
-  username: string;
-  imageUrl?: string;
-}
-
-// Создаём новый интерфейс GameWithId, используя PlayerWithStringTelegramId
-interface GameWithId extends Omit<GameType, 'player1' | 'player2'> {
+// Создаём интерфейс GameWithId, добавляя поле 'id'
+interface GameWithId extends GameType {
   id: string;
-  player1: PlayerWithStringTelegramId;
-  player2?: PlayerWithStringTelegramId;
 }
 
 const ActiveGamesList: React.FC = () => {
@@ -29,29 +19,25 @@ const ActiveGamesList: React.FC = () => {
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    // Проверяем, авторизован ли пользователь
     if (!user) {
       setActiveGames([]);
       setLoading(false);
       return;
     }
 
-    // Создаём запрос к Firestore для получения активных игр пользователя
     const q = query(
       collection(db, 'games'),
       where('status', '==', 'active'),
-      where('player1.userId', '==', user.id) // Или 'player2.userId' в зависимости от роли
+      where('player1.userId', '==', user.id)
     );
 
-    // Подписываемся на изменения в коллекции игр
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
         const games: GameWithId[] = snapshot.docs.map((doc) => {
           const data = doc.data();
 
-          // Создаём объект игры с добавленным полем 'id' и преобразованием telegramId в string
-          return {
+          const game: GameWithId = {
             id: doc.id,
             name: data.name,
             description: data.description,
@@ -62,22 +48,23 @@ const ActiveGamesList: React.FC = () => {
             rounds: data.rounds || [],
             player1: {
               userId: data.player1.userId,
-              telegramId: String(data.player1.telegramId), // Преобразуем number в string
+              telegramId: String(data.player1.telegramId),
               username: data.player1.username,
-              imageUrl: data.player1.imageUrl, // optional
+             
             },
             player2: data.player2
               ? {
                   userId: data.player2.userId,
-                  telegramId: String(data.player2.telegramId), // Преобразуем number в string
+                  telegramId: String(data.player2.telegramId),
                   username: data.player2.username,
-                  imageUrl: data.player2.imageUrl, // optional
+                 
                 }
               : undefined,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
             finalResult: data.finalResult,
           };
+          return game;
         });
 
         setActiveGames(games);
@@ -90,11 +77,9 @@ const ActiveGamesList: React.FC = () => {
       }
     );
 
-    // Очистка подписки при размонтировании компонента
     return () => unsubscribe();
   }, [user]);
 
-  // Отображение состояния загрузки
   if (loading) {
     return (
       <div className="mt-8">
@@ -104,7 +89,6 @@ const ActiveGamesList: React.FC = () => {
     );
   }
 
-  // Отображение ошибки, если она есть
   if (error) {
     return (
       <div className="mt-8">
@@ -114,7 +98,6 @@ const ActiveGamesList: React.FC = () => {
     );
   }
 
-  // Дополнительная проверка на наличие пользователя
   if (!user) {
     return (
       <div className="mt-8">
@@ -132,7 +115,6 @@ const ActiveGamesList: React.FC = () => {
       ) : (
         <div className="space-y-4">
           {activeGames.map((game) => {
-            // Вспомогательная переменная для имени соперника
             const opponentUsername =
               game.player1.userId === user.id
                 ? game.player2?.username || 'Неизвестный игрок'
@@ -144,21 +126,16 @@ const ActiveGamesList: React.FC = () => {
                   Игра с {opponentUsername}
                 </h3>
                 <p>Ставка: {game.betAmount} ETH</p>
-                {/* Компонент для подтверждения участия Player 1 */}
                 {game.player1.userId === user.id && game.player2 && !game.rounds.length && (
                   <ConfirmJoinButton game={game} />
                 )}
                 {/* Отображение текущих раундов */}
-                {game.rounds.map((round, index) => (
-                  <GameRound
-                    key={index}
-                    game={game}
-                    currentPlayer={
-                      user.id === game.player1.userId ? 'player1' : 'player2'
-                    }
-                  />
-                ))}
-                {/* Дополнительные элементы управления по необходимости */}
+                <GameRound
+                  key={game.id}
+                  game={game}
+                  currentPlayer={game.player1.userId === user.id ? 'player1' : 'player2'}
+                />
+                {/* Дополнительные элементы управления */}
               </div>
             );
           })}
