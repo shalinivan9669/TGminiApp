@@ -4,7 +4,7 @@ import { db } from '@/firebase/adminApp';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { useAppContext } from '@/app/context/AppContext';
 import GameRound from '@/components/GameRound';
-import ConfirmJoinButton from '@/components/ConfirmJoinButton';
+import ConfirmJoinButton from '@/components/Buttons/ConfirmJoinButton';
 
 interface Game {
   id: string;

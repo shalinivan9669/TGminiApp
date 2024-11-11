@@ -1,4 +1,4 @@
-// app/api/games/confirmGame/route.ts
+// src/pages/api/games/confirmGame/route.ts
 import { NextResponse } from 'next/server';
 import { db } from '@/firebase/adminApp';
 import { doc, updateDoc, FieldValue } from 'firebase-admin/firestore';
@@ -86,3 +86,5 @@ export async function POST(request: Request) {
     console.log('--- [confirmGame API] Request End ---');
   }
 }
+
+export default POST;

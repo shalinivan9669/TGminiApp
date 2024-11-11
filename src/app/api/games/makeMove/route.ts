@@ -1,4 +1,4 @@
-// app/api/games/makeMove/route.ts
+// src/pages/api/games/makeMove/route.ts
 import { NextResponse } from 'next/server';
 import { db } from '@/firebase/adminApp';
 import { FieldValue } from 'firebase-admin/firestore';
@@ -12,14 +12,14 @@ interface MakeMoveRequest {
 }
 
 export async function POST(request: Request) {
-  if (request.method !== 'POST') {
-    return NextResponse.json({ message: 'Method not allowed' }, { status: 405 });
-  }
+  console.log('--- [makeMove API] Request Start ---');
+  console.log('Method:', request.method);
+  console.log('URL:', request.url);
 
   let body: MakeMoveRequest;
   try {
     body = await request.json();
-    console.log('Received makeMove body:', body); // Логирование полученных данных
+    console.log('Received makeMove body:', body);
   } catch (error) {
     console.error('Invalid JSON:', error);
     return NextResponse.json({ message: 'Invalid JSON' }, { status: 400 });
@@ -49,6 +49,7 @@ export async function POST(request: Request) {
     }
 
     const gameData = gameSnap.data() as Game;
+    console.log('Game Data:', JSON.stringify(gameData, null, 2));
 
     if (!gameData.player2) {
       console.error('Game does not have a second player yet:', gameId);
@@ -87,10 +88,10 @@ export async function POST(request: Request) {
     }
 
     // Определение, чей ход
-    const isPlayer1 = gameData.player1.id === userId;
+    const isPlayer1 = gameData.player1.userId === userId;
     if (isPlayer1) {
       currentRound.player1Move = move;
-    } else if (gameData.player2 && gameData.player2.id === userId) {
+    } else if (gameData.player2 && gameData.player2.userId === userId) {
       currentRound.player2Move = move;
     } else {
       console.error('Игрок не участвует в этой игре:', userId);
@@ -132,3 +133,5 @@ export async function POST(request: Request) {
     console.log('--- [makeMove API] Request End ---');
   }
 }
+
+export default POST;

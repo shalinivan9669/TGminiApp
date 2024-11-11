@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { db } from '@/firebase/adminApp';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import JoinGameButton from '@/components/JoinGameButton';
+import JoinGameButton from '@/components/Buttons/JoinGameButton';
 import { useAppContext } from '@/app/context/AppContext';
 
 interface Game {

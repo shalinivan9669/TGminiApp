@@ -1,4 +1,4 @@
-// app/api/games/joinGame/route.ts
+// src/pages/api/games/joinGame/route.ts
 import { NextResponse } from 'next/server';
 import { db } from '@/firebase/adminApp';
 import { FieldValue } from 'firebase-admin/firestore';
@@ -150,3 +150,5 @@ export async function POST(request: Request) {
     console.log('--- [joinGame API] Request End ---');
   }
 }
+
+export default POST;

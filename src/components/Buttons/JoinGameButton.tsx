@@ -63,7 +63,7 @@ const JoinGameButton: React.FC<JoinGameButtonProps> = ({ game }) => {
         <Modal onClose={() => setIsModalOpen(false)}>
           <div className="p-4">
             <h2 className="text-xl font-semibold mb-4">Присоединиться к игре</h2>
-            {error && <p className="text-red-500 mb-2">{error}</p>}
+            {error && <p className="text-red-500 mb-2">{error.replace(/"/g, '&quot;')}</p>}
             <p>Вы уверены, что хотите присоединиться к игре &quot;{game.name}&quot;?</p>
             <div className="flex justify-end space-x-4 mt-4">
               <button

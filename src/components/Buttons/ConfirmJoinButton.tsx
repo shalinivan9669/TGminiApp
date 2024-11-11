@@ -1,45 +1,51 @@
 // src/components/Buttons/ConfirmJoinButton.tsx
-import React, { useState } from 'react';
-import Modal from '@/components/UI/Modal';
+import React from 'react';
+import { Game } from '@/types';
 import { useAppContext } from '@/app/context/AppContext';
+import Modal from '@/components/UI/Modal';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface ConfirmJoinButtonProps {
-  gameId: string;
+  game: Game;
 }
 
-const ConfirmJoinButton: React.FC<ConfirmJoinButtonProps> = ({ gameId }) => {
+const ConfirmJoinButton: React.FC<ConfirmJoinButtonProps> = ({ game }) => {
   const { user } = useAppContext();
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
-  const handleConfirm = async () => {
+  const handleConfirmJoin = async () => {
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch('/api/games/confirmGame', {
+      const response = await fetch('/api/games/joinGame', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          gameId,
+          gameId: game.id,
           userId: user?.id,
+          telegramId: user?.telegramId,
+          username: user?.username,
         }),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Failed to confirm game');
+        throw new Error(data.message || 'Не удалось присоединиться к игре');
       }
 
       const data = await response.json();
       setIsModalOpen(false);
-      // Можно добавить уведомление или другой UX фидбек
+      router.push(`/play/${game.id}`);
     } catch (err: any) {
-      console.error('Ошибка при подтверждении игры:', err);
-      setError(err.message || 'Не удалось подтвердить игру. Попробуйте ещё раз.');
+      console.error('Ошибка при присоединении к игре:', err);
+      setError(err.message || 'Не удалось присоединиться к игре. Попробуйте ещё раз.');
     } finally {
       setLoading(false);
     }
@@ -49,17 +55,17 @@ const ConfirmJoinButton: React.FC<ConfirmJoinButtonProps> = ({ gameId }) => {
     <>
       <button
         onClick={() => setIsModalOpen(true)}
-        className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded"
+        className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded mt-2"
       >
-        Подтвердить участие
+        Присоединиться к игре
       </button>
 
       {isModalOpen && (
         <Modal onClose={() => setIsModalOpen(false)}>
           <div className="p-4">
-            <h2 className="text-xl font-semibold mb-4">Подтвердить участие</h2>
-            {error && <p className="text-red-500 mb-2">{error}</p>}
-            <p>Вы уверены, что хотите подтвердить участие второго игрока?</p>
+            <h2 className="text-xl font-semibold mb-4">Присоединиться к игре</h2>
+            {error && <p className="text-red-500 mb-2">{error.replace(/"/g, '&quot;')}</p>}
+            <p>Вы уверены, что хотите присоединиться к игре &quot;{game.name}&quot;?</p>
             <div className="flex justify-end space-x-4 mt-4">
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -68,11 +74,11 @@ const ConfirmJoinButton: React.FC<ConfirmJoinButtonProps> = ({ gameId }) => {
                 Отмена
               </button>
               <button
-                onClick={handleConfirm}
+                onClick={handleConfirmJoin}
                 disabled={loading}
-                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
+                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded"
               >
-                {loading ? 'Подтверждаю...' : 'Подтвердить'}
+                {loading ? 'Присоединяюсь...' : 'Присоединиться'}
               </button>
             </div>
           </div>

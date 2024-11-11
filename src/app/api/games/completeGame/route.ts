@@ -1,4 +1,4 @@
-// app/api/games/completeGame/route.ts
+// src/pages/api/games/completeGame/route.ts
 import { NextResponse } from 'next/server';
 import { db } from '@/firebase/adminApp';
 import { FieldValue } from 'firebase-admin/firestore';
@@ -107,3 +107,5 @@ export async function POST(request: Request) {
     console.log('--- [completeGame API] Request End ---');
   }
 }
+
+export default POST;

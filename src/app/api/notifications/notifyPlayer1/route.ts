@@ -1,6 +1,7 @@
-// app/api/notifications/notifyPlayer1/route.ts
+// src/pages/api/notifications/notifyPlayer1/route.ts
 import { NextResponse } from 'next/server';
 // import TelegramBot from 'node-telegram-bot-api';
+import { db } from '@/firebase/adminApp';
 
 // const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
 // const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: false });
@@ -27,20 +28,23 @@ export async function POST(request: Request) {
 
   const { telegramId, gameId, opponentUsername } = body;
 
-  if (!telegramId || typeof telegramId !== 'number' || !gameId || typeof gameId !== 'string' || !opponentUsername || typeof opponentUsername !== 'string') {
-    console.log('Missing or invalid required fields');
-    return NextResponse.json({ message: 'Missing or invalid required fields' }, { status: 400 });
+  if (!telegramId || !gameId || !opponentUsername) {
+    console.log('Missing required fields');
+    return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
   }
 
   try {
-    // const message = `Ваш противник ${opponentUsername} присоединился к игре ${gameId}!`;
+    // const message = `Игрок ${opponentUsername} присоединился к вашей игре ${gameId}.`;
     // await bot.sendMessage(telegramId, message);
-    console.log(`Notification to Player 1: Opponent ${opponentUsername} joined game ${gameId}.`);
-    return NextResponse.json({ message: 'Notification sent to Player 1' }, { status: 200 });
-  } catch (error) {
-    console.error('Error sending notification to Player 1:', error);
-    return NextResponse.json({ message: 'Failed to send notification', error: error.message }, { status: 500 });
+    console.log(`Player 1 notified: Игрок ${opponentUsername} присоединился к вашей игре ${gameId}.`);
+
+    return NextResponse.json({ message: 'Player 1 notified successfully' }, { status: 200 });
+  } catch (error: any) {
+    console.error('Error notifying Player 1:', error);
+    return NextResponse.json({ message: 'Internal server error', error: error.message }, { status: 500 });
   } finally {
     console.log('--- [notifyPlayer1 API] Request End ---');
   }
 }
+
+export default POST;

@@ -1,6 +1,7 @@
-// app/api/notifications/notifyPlayer2/route.ts
+// src/pages/api/notifications/notifyPlayer2/route.ts
 import { NextResponse } from 'next/server';
 // import TelegramBot from 'node-telegram-bot-api';
+import { db } from '@/firebase/adminApp';
 
 // const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
 // const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: false });
@@ -26,20 +27,23 @@ export async function POST(request: Request) {
 
   const { telegramId, gameId } = body;
 
-  if (!telegramId || typeof telegramId !== 'number' || !gameId || typeof gameId !== 'string') {
-    console.log('Missing or invalid required fields');
-    return NextResponse.json({ message: 'Missing or invalid required fields' }, { status: 400 });
+  if (!telegramId || !gameId) {
+    console.log('Missing required fields');
+    return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
   }
 
   try {
-    // const message = `Вы присоединились к игре ${gameId}! Начните раунды!`;
+    // const message = `Вы присоединились к игре ${gameId}. Начните игру!`;
     // await bot.sendMessage(telegramId, message);
-    console.log(`Notification to Player 2: Joined game ${gameId}. Start rounds.`);
-    return NextResponse.json({ message: 'Notification sent to Player 2' }, { status: 200 });
-  } catch (error) {
-    console.error('Error sending notification to Player 2:', error);
-    return NextResponse.json({ message: 'Failed to send notification', error: error.message }, { status: 500 });
+    console.log(`Player 2 notified: Вы присоединились к игре ${gameId}. Начните игру!`);
+
+    return NextResponse.json({ message: 'Player 2 notified successfully' }, { status: 200 });
+  } catch (error: any) {
+    console.error('Error notifying Player 2:', error);
+    return NextResponse.json({ message: 'Internal server error', error: error.message }, { status: 500 });
   } finally {
     console.log('--- [notifyPlayer2 API] Request End ---');
   }
 }
+
+export default POST;

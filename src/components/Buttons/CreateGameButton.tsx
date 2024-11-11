@@ -62,7 +62,7 @@ const CreateGameButton: React.FC = () => {
         <Modal onClose={() => setIsModalOpen(false)}>
           <div className="p-4">
             <h2 className="text-xl font-semibold mb-4">Создать новую игру</h2>
-            {error && <p className="text-red-500 mb-2">{error}</p>}
+            {error && <p className="text-red-500 mb-2">{error.replace(/"/g, '&quot;')}</p>}
             <input
               type="number"
               placeholder="Размер ставки (ETH)"

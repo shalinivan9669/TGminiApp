@@ -6,6 +6,18 @@ interface AppContextProps {
   setActiveTab: React.Dispatch<React.SetStateAction<string>>;
   selectedFilter: string;
   setSelectedFilter: React.Dispatch<React.SetStateAction<string>>;
+  user: {
+    id: string;
+    telegramId: number;
+    username: string;
+    imageUrl?: string;
+  } | null;
+  setUser: React.Dispatch<React.SetStateAction<{
+    id: string;
+    telegramId: number;
+    username: string;
+    imageUrl?: string;
+  } | null>>;
 }
 
 const AppContext = createContext<AppContextProps>({
@@ -13,11 +25,19 @@ const AppContext = createContext<AppContextProps>({
   setActiveTab: () => {},
   selectedFilter: 'Все',
   setSelectedFilter: () => {},
+  user: null,
+  setUser: () => {},
 });
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [activeTab, setActiveTab] = useState<string>('Поиск');
   const [selectedFilter, setSelectedFilter] = useState<string>('Все');
+  const [user, setUser] = useState<{
+    id: string;
+    telegramId: number;
+    username: string;
+    imageUrl?: string;
+  } | null>(null);
 
   return (
     <AppContext.Provider
@@ -26,6 +46,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setActiveTab,
         selectedFilter,
         setSelectedFilter,
+        user,
+        setUser,
       }}
     >
       {children}

@@ -1,4 +1,4 @@
-// app/api/games/createGame/route.ts
+// src/pages/api/games/createGame/route.ts
 import { NextResponse } from 'next/server';
 import { db } from '@/firebase/adminApp';
 import { FieldValue } from 'firebase-admin/firestore';
@@ -84,3 +84,5 @@ export async function POST(request: Request) {
     console.log('--- [createGame API] Request End ---');
   }
 }
+
+export default POST;
