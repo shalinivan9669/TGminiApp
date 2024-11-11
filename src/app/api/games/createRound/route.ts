@@ -1,4 +1,4 @@
-// app/api/games/createRound/route.ts
+// src/app/api/games/createRound/route.ts
 import { NextResponse } from 'next/server';
 import { db } from '@/firebase/adminApp';
 import { FieldValue } from 'firebase-admin/firestore';
@@ -89,12 +89,13 @@ export async function POST(request: Request) {
     }
 
     // Определение, чей ход
-    const isPlayer1 = gameData.player1.id === userId;
+    const isPlayer1 = gameData.player1.userId === userId; // Изменено с 'id' на 'userId'
     if (isPlayer1) {
       currentRound.player1Move = move;
-    } else if (gameData.player2 && gameData.player2.id === userId) {
+    } else if (gameData.player2 && gameData.player2.userId === userId) { // Изменено с 'id' на 'userId'
       currentRound.player2Move = move;
     } else {
+      console.error('Игрок не участвует в этой игре:', userId);
       return NextResponse.json({ message: 'Игрок не участвует в этой игре.' }, { status: 403 });
     }
 
@@ -125,7 +126,7 @@ export async function POST(request: Request) {
       console.log(`Round ${currentRound.roundNumber} updated with ${isPlayer1 ? 'player1Move' : 'player2Move'}.`);
     }
 
-    return NextResponse.json({ message: 'Round processed successfully' }, { status: 200 });
+    return NextResponse.json({ message: 'Move recorded successfully' }, { status: 200 });
   } catch (error: any) {
     console.error('Error processing round:', error);
     return NextResponse.json({ message: 'Internal server error', error: error.message }, { status: 500 });

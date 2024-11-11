@@ -1,6 +1,5 @@
 // src/types/index.ts
 export interface Game {
-  id: string;
   name: string;
   description: string;
   imageUrl: string;
@@ -9,9 +8,10 @@ export interface Game {
   status: 'open' | 'active' | 'completed';
   rounds: Round[];
   player1: Player;
-  player2: Player | null;
-  createdAt: any;
-  updatedAt: any;
+  player2?: Player;
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+  finalResult?: string;
 }
 
 export interface Player {
