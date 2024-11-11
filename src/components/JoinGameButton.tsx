@@ -1,4 +1,4 @@
-// src/components/JoinGameButton.tsx
+// src/components/Buttons/JoinGameButton.tsx
 import React, { useState } from 'react';
 import { useAppContext } from '@/app/context/AppContext';
 
@@ -67,7 +67,7 @@ const JoinGameButton: React.FC<JoinGameButtonProps> = ({ game }) => {
 
   return (
     <div className="mt-2">
-      {error && <p className="text-red-500 mb-2">{error}</p>}
+      {error && <p className="text-red-500 mb-2">{error.replace(/"/g, '&quot;')}</p>}
       <button
         onClick={handleJoinGame}
         disabled={loading}
