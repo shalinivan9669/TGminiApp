@@ -1,5 +1,6 @@
 // src/components/OpenGamesList.tsx
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { db } from '@/firebase/adminApp';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import JoinGameButton from '@/components/JoinGameButton';
@@ -48,7 +49,13 @@ const OpenGamesList: React.FC = () => {
           {openGames.map((game) => (
             <div key={game.id} className="border border-gray-300 p-4 rounded-lg shadow">
               <div className="flex items-center mb-2">
-                <img src="/images/game_placeholder.jpg" alt="Game" className="w-16 h-16 object-cover rounded mr-4" />
+                <Image
+                  src="/images/game_placeholder.jpg"
+                  alt="Game"
+                  width={64} // Соответствует классу w-16 (16 * 4 = 64px)
+                  height={64}
+                  className="object-cover rounded mr-4"
+                />
                 <div>
                   <h3 className="text-lg font-semibold">{`Игра от ${game.player1.username}`}</h3>
                   <p>{`Ставка: ${game.betAmount} ETH`}</p>
