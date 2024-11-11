@@ -1,7 +1,7 @@
-// src/pages/api/games/confirmGame/route.ts
+// src/app/api/games/confirmGame/route.ts
 import { NextResponse } from 'next/server';
 import { db } from '@/firebase/adminApp';
-import { doc, updateDoc, FieldValue } from 'firebase-admin/firestore';
+import { FieldValue } from 'firebase-admin/firestore';
 // import TelegramBot from 'node-telegram-bot-api';
 
 // const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       { roundNumber: 3, player1Move: null, player2Move: null, result: null },
     ];
 
-    await updateDoc(gameRef, {
+    await gameRef.update({
       rounds: initialRounds,
       updatedAt: FieldValue.serverTimestamp(),
     });
@@ -86,5 +86,3 @@ export async function POST(request: Request) {
     console.log('--- [confirmGame API] Request End ---');
   }
 }
-
-export default POST;

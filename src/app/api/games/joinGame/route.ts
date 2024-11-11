@@ -150,5 +150,4 @@ export async function POST(request: Request) {
     console.log('--- [joinGame API] Request End ---');
   }
 }
-
-export default POST;
+ 

@@ -1,4 +1,4 @@
-// src/pages/api/notifications/notifyPlayer1/route.ts
+// src/app/api/notifications/notifyPlayer1/route.ts
 import { NextResponse } from 'next/server';
 // import TelegramBot from 'node-telegram-bot-api';
 import { db } from '@/firebase/adminApp';
@@ -46,5 +46,3 @@ export async function POST(request: Request) {
     console.log('--- [notifyPlayer1 API] Request End ---');
   }
 }
-
-export default POST;

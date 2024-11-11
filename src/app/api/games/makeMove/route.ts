@@ -1,4 +1,4 @@
-// src/pages/api/games/makeMove/route.ts
+// src/app/api/games/makeMove/route.ts
 import { NextResponse } from 'next/server';
 import { db } from '@/firebase/adminApp';
 import { FieldValue } from 'firebase-admin/firestore';
@@ -133,5 +133,3 @@ export async function POST(request: Request) {
     console.log('--- [makeMove API] Request End ---');
   }
 }
-
-export default POST;
