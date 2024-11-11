@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 // import TelegramBot from 'node-telegram-bot-api';
 import { db } from '@/firebase/adminApp';
+import { Game } from '@/types'; // Убедитесь, что Game импортирован
 
 // const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
 // const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: false });
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Game not found' }, { status: 404 });
     }
 
-    const gameData = gameSnap.data();
+    const gameData = gameSnap.data() as Game; // Приведение типа к Game
 
     if (!gameData.player1 || !gameData.player2) {
       console.log('Players data missing');
