@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Game } from '@/types';
 import Modal from '@/components/UI/Modal';
 import { useAppContext } from '@/app/context/AppContext';
-import { useRouter } from 'next/navigation'; // Добавьте этот импорт
+import { useRouter } from 'next/navigation';
 
 interface JoinGameButtonProps {
   game: Game;
@@ -11,7 +11,7 @@ interface JoinGameButtonProps {
 
 const JoinGameButton: React.FC<JoinGameButtonProps> = ({ game }) => {
   const { user } = useAppContext();
-  const router = useRouter(); // Инициализируйте useRouter
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
@@ -41,7 +41,6 @@ const JoinGameButton: React.FC<JoinGameButtonProps> = ({ game }) => {
 
       const data = await response.json();
       setIsModalOpen(false);
-      // Перенаправление на страницу игры
       router.push(`/play/${game.id}`);
     } catch (err: any) {
       console.error('Ошибка при присоединении к игре:', err);
@@ -65,7 +64,7 @@ const JoinGameButton: React.FC<JoinGameButtonProps> = ({ game }) => {
           <div className="p-4">
             <h2 className="text-xl font-semibold mb-4">Присоединиться к игре</h2>
             {error && <p className="text-red-500 mb-2">{error}</p>}
-            <p>Вы уверены, что хотите присоединиться к игре "{game.name}"?</p>
+            <p>Вы уверены, что хотите присоединиться к игре &quot;{game.name}&quot;?</p>
             <div className="flex justify-end space-x-4 mt-4">
               <button
                 onClick={() => setIsModalOpen(false)}
