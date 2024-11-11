@@ -26,3 +26,9 @@ export interface Round {
   player2Move: 'rock' | 'paper' | 'scissors' | null;
   result: 'player1' | 'player2' | 'draw' | null;
 }
+
+export interface Collection {
+  imageUrl: string;
+  name: string;
+  description: string;
+}

@@ -7,6 +7,7 @@ import Tabs from '@/components/Tabs';
 import Filters from '@/components/Filters';
 import { useAppContext } from '../context/AppContext';
 import Link from 'next/link';
+import { Collection } from '@/types'; // Импортируем интерфейс
 
 const Collections: React.FC = () => {
   const { activeTab, setActiveTab, selectedFilter, setSelectedFilter } = useAppContext();
@@ -15,7 +16,7 @@ const Collections: React.FC = () => {
   const tabs = ['Все', 'Изображения', 'Описание', 'Рейтинги'];
   const filters = ['Рейтинг > 4', 'Новые', 'Популярные'];
 
-  const collections = [
+  const collections: Collection[] = [
     // Пустой массив для тестирования
     // Добавьте больше коллекций по необходимости
   ];
@@ -133,4 +134,3 @@ const Collections: React.FC = () => {
 };
 
 export default Collections;
- 
