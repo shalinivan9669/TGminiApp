@@ -7,16 +7,15 @@ import RoundsList from '@/components/RoundsList';
 import MakeMoveButton from '@/components/MakeMoveButton';
 import { db } from '@/firebase/clientApp';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { Game } from '@/types';
+import { GameWithId } from '@/types';
+import { useAppContext } from '@/app/context/AppContext';
+import PendingGameActions from '@/components/PendingGameActions/PendingGameActions';
 
 const PlayGame: React.FC = () => {
   const params = useParams();
   const gameId = params?.gameId as string;
 
-  // Расширенный интерфейс для игр с 'id'
-  interface GameWithId extends Game {
-    id: string;
-  }
+  const { user } = useAppContext();
 
   const [gameData, setGameData] = useState<GameWithId | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -24,7 +23,7 @@ const PlayGame: React.FC = () => {
 
   useEffect(() => {
     if (gameId) {
-      console.log('Fetching game with ID:', gameId); // Логирование gameId
+      console.log('Fetching game with ID:', gameId);
       const gameDocRef = doc(db, 'games', gameId);
       const unsubscribe = onSnapshot(
         gameDocRef,
@@ -42,11 +41,17 @@ const PlayGame: React.FC = () => {
               rounds: data.rounds || [],
               player1: data.player1,
               player2: data.player2,
+              creatorId: data.creatorId,
+              currentPlayer: data.currentPlayer,
+              pendingBetAmount: data.pendingBetAmount,
+              isBetAccepted: data.isBetAccepted,
+              totalRounds: data.totalRounds,
+              winner: data.winner,
               createdAt: data.createdAt,
               updatedAt: data.updatedAt,
               finalResult: data.finalResult,
             };
-            console.log('Fetched game data:', game); // Логирование данных игры
+            console.log('Fetched game data:', game);
             setGameData(game);
           } else {
             setError('Игра не найдена.');
@@ -71,40 +76,49 @@ const PlayGame: React.FC = () => {
   if (error) return <div className="text-red-500">{error}</div>;
   if (!gameData) return <div>Игра не найдена.</div>;
 
-  const player1Id = gameData.player1.userId;
-  const player2Id = gameData.player2?.userId || '';
+  // Определяем роль текущего пользователя
+  let currentPlayerRole: 'player1' | 'player2' | null = null;
+  if (gameData.player1.userId === user?.id) {
+    currentPlayerRole = 'player1';
+  } else if (gameData.player2?.userId === user?.id) {
+    currentPlayerRole = 'player2';
+  }
+
+  if (!currentPlayerRole) {
+    return <p>Вы не участвуете в этой игре.</p>;
+  }
+
+  if (gameData.status === 'pending' && user?.id === gameData.creatorId) {
+    return (
+      <div className="p-4">
+        <h1 className="text-2xl font-bold">Игра: {gameData.name}</h1>
+        <PendingGameActions game={gameData} />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold">Игра: {gameData.name}</h1>
-      <RoundsList rounds={gameData.rounds} />
+      <RoundsList rounds={gameData.rounds} currentPlayerRole={currentPlayerRole} />
       {gameData.status === 'active' && (
         <div className="mt-4">
-          <h2 className="text-xl">Ходы:</h2>
-          <div className="flex space-x-4">
-            {/* Кнопки для Player1 */}
-            <div>
-              <p>{gameData.player1.username} ходит:</p>
-              <MakeMoveButton gameId={gameId} userId={player1Id} move="rock" />
-              <MakeMoveButton gameId={gameId} userId={player1Id} move="paper" />
-              <MakeMoveButton gameId={gameId} userId={player1Id} move="scissors" />
-            </div>
-            {/* Кнопки для Player2 */}
-            {gameData.player2 && (
-              <div>
-                <p>{gameData.player2.username} ходит:</p>
-                <MakeMoveButton gameId={gameId} userId={player2Id} move="rock" />
-                <MakeMoveButton gameId={gameId} userId={player2Id} move="paper" />
-                <MakeMoveButton gameId={gameId} userId={player2Id} move="scissors" />
-              </div>
-            )}
-          </div>
+          <h2 className="text-xl">Ваш ход:</h2>
+          <MakeMoveButton game={gameData} currentPlayerRole={currentPlayerRole} />
         </div>
       )}
       {gameData.status === 'completed' && (
         <div className="mt-4">
           <h2 className="text-xl">Игра завершена!</h2>
-          <p>Итоговый результат: {gameData.finalResult}</p>
+          <p>
+            Победитель:{' '}
+            {gameData.winner === 'draw'
+              ? 'Ничья'
+              : gameData.winner === 'player1'
+              ? gameData.player1.username
+              : gameData.player2?.username}
+          </p>
+          <RoundsList rounds={gameData.rounds} />
         </div>
       )}
     </div>

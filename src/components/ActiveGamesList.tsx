@@ -28,7 +28,7 @@ const ActiveGamesList: React.FC = () => {
     const q = query(
       collection(db, 'games'),
       where('status', '==', 'active'),
-      where('player1.userId', '==', user.id)
+      where('players', 'array-contains', user.id)
     );
 
     const unsubscribe = onSnapshot(
@@ -50,19 +50,19 @@ const ActiveGamesList: React.FC = () => {
               userId: data.player1.userId,
               telegramId: String(data.player1.telegramId),
               username: data.player1.username,
-             
             },
             player2: data.player2
               ? {
-                  userId: data.player2.userId,
-                  telegramId: String(data.player2.telegramId),
-                  username: data.player2.username,
-                 
-                }
+                userId: data.player2.userId,
+                telegramId: String(data.player2.telegramId),
+                username: data.player2.username,
+              }
               : undefined,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
             finalResult: data.finalResult,
+            creatorId: '',
+            currentPlayer: 'player1'
           };
           return game;
         });

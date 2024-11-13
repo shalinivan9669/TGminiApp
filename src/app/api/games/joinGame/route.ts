@@ -1,4 +1,4 @@
-// src/pages/api/games/joinGame/route.ts
+// src/app/api/games/joinGame/route.ts
 import { NextResponse } from 'next/server';
 import { db } from '@/firebase/adminApp';
 import { FieldValue } from 'firebase-admin/firestore';
@@ -6,11 +6,10 @@ import { FieldValue } from 'firebase-admin/firestore';
 interface JoinGameRequest {
   gameId: string;
   userId: string;
-  telegramId: number;
+  telegramId: string;
   username: string;
+  betAmount: number;
 }
-
-const BASE_URL = process.env.BASE_URL;
 
 export async function POST(request: Request) {
   console.log('--- [joinGame API] Request Start ---');
@@ -26,24 +25,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Invalid JSON' }, { status: 400 });
   }
 
-  let { gameId, userId, telegramId, username } = body;
+  let { gameId, userId, telegramId, username, betAmount } = body;
 
-  // Мокирование данных при отсутствии или некорректности входящих данных
   if (!gameId || typeof gameId !== 'string') {
-    console.log('Using mock gameId');
-    gameId = 'mockGame123';
+    console.log('Invalid or missing gameId');
+    return NextResponse.json({ message: 'Invalid or missing gameId' }, { status: 400 });
   }
   if (!userId || typeof userId !== 'string') {
-    console.log('Using mock userId');
-    userId = 'mockUser456';
+    console.log('Invalid or missing userId');
+    return NextResponse.json({ message: 'Invalid or missing userId' }, { status: 400 });
   }
-  if (!telegramId || typeof telegramId !== 'number') {
-    console.log('Using mock telegramId');
-    telegramId = 9876543210;
+  if (!telegramId || typeof telegramId !== 'string') {
+    console.log('Invalid or missing telegramId');
+    return NextResponse.json({ message: 'Invalid or missing telegramId' }, { status: 400 });
   }
   if (!username || typeof username !== 'string') {
-    console.log('Using mock username');
-    username = 'mockUser456';
+    console.log('Invalid or missing username');
+    return NextResponse.json({ message: 'Invalid or missing username' }, { status: 400 });
+  }
+  if (!betAmount || typeof betAmount !== 'number' || betAmount <= 0) {
+    console.log('Invalid or missing betAmount');
+    return NextResponse.json({ message: 'Invalid or missing betAmount' }, { status: 400 });
   }
 
   console.log('Final Fields:');
@@ -51,6 +53,7 @@ export async function POST(request: Request) {
   console.log('userId:', userId);
   console.log('telegramId:', telegramId);
   console.log('username:', username);
+  console.log('betAmount:', betAmount);
 
   try {
     const gameRef = db.collection('games').doc(gameId);
@@ -66,8 +69,8 @@ export async function POST(request: Request) {
     console.log('Game Data:', JSON.stringify(gameData, null, 2));
 
     if (gameData?.status !== 'open') {
-      console.log('Game is not open for joining. Status:', gameData.status);
-      return NextResponse.json({ message: 'Game is not open for joining' }, { status: 400 });
+      console.log('Game is not available for joining. Status:', gameData.status);
+      return NextResponse.json({ message: 'Game is not available for joining' }, { status: 400 });
     }
 
     if (gameData.players.length >= 2) {
@@ -75,7 +78,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Game already has two players' }, { status: 400 });
     }
 
-    // Добавляем второго игрока
+    // Проверяем, не пытается ли пользователь присоединиться к своей игре
+    if (gameData.creatorId === userId) {
+      console.log('User cannot join their own game');
+      return NextResponse.json({ message: 'You cannot join your own game' }, { status: 400 });
+    }
+
+    // Добавляем второго игрока и обновляем ставку
     console.log('Adding player to the game');
     await gameRef.update({
       players: FieldValue.arrayUnion(userId),
@@ -85,62 +94,13 @@ export async function POST(request: Request) {
         telegramId,
         username,
       },
-      status: 'active', // Изменяем статус на 'active'
+      pendingBetAmount: betAmount,
+      status: 'pending', // Изменяем статус на 'pending' после присоединения второго игрока
     });
     console.log('Player added successfully');
 
-    // Отправляем уведомление Player 1 о присоединении Player 2
-    if (gameData.player1 && gameData.player1.telegramId) {
-      console.log('Notifying Player 1 about new player');
-      if (!BASE_URL) {
-        console.error('BASE_URL is not defined in environment variables');
-      } else {
-        const notifyPlayer1Response = await fetch(`${BASE_URL}/api/notifications/notifyPlayer1`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            telegramId: gameData.player1.telegramId,
-            gameId,
-            opponentUsername: username,
-          }),
-        });
-
-        if (!notifyPlayer1Response.ok) {
-          const errorData = await notifyPlayer1Response.json();
-          console.error('Error notifying Player 1:', errorData);
-        } else {
-          console.log('Notification sent to Player 1');
-        }
-      }
-    } else {
-      console.log('Player 1 data is missing, skipping notification');
-    }
-
-    // Отправляем уведомление Player 2 о начале игры
-    console.log('Notifying Player 2 about game start');
-    if (BASE_URL) {
-      const notifyPlayer2Response = await fetch(`${BASE_URL}/api/notifications/notifyPlayer2`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          telegramId,
-          gameId,
-        }),
-      });
-
-      if (!notifyPlayer2Response.ok) {
-        const errorData = await notifyPlayer2Response.json();
-        console.error('Error notifying Player 2:', errorData);
-      } else {
-        console.log('Notification sent to Player 2');
-      }
-    } else {
-      console.error('BASE_URL is not defined in environment variables');
-    }
+    // Отправляем уведомление Player 1 о предложенной ставке (опционально)
+    // Ваш код для отправки уведомления
 
     return NextResponse.json({ message: 'Joined game successfully' }, { status: 200 });
   } catch (error: any) {
@@ -150,4 +110,3 @@ export async function POST(request: Request) {
     console.log('--- [joinGame API] Request End ---');
   }
 }
- 

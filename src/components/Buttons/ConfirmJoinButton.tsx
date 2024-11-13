@@ -1,6 +1,6 @@
 // src/components/Buttons/ConfirmJoinButton.tsx
 import React, { useState } from 'react';
-import { Game as GameType } from '@/types';
+import { Game as GameType } from '@/types'; // Убедитесь, что импортируется правильный интерфейс
 import { useAppContext } from '@/app/context/AppContext';
 import Modal from '@/components/UI/Modal';
 import { useRouter } from 'next/navigation';

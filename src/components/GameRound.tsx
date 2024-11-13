@@ -1,9 +1,9 @@
 // src/components/GameRound.tsx
 import React from 'react';
-import { Game } from '@/types'; // Убедитесь, что импортируется правильный интерфейс
+import { GameWithId } from '@/types'; // Убедитесь, что импортируется правильный интерфейс
 
 interface GameRoundProps {
-  game: Game; // Используем интерфейс Game из вашего файла типов, где player2 опционален
+  game: GameWithId; // Используем GameWithId, который включает id
   currentPlayer: 'player1' | 'player2';
 }
 

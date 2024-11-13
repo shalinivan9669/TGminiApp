@@ -7,13 +7,19 @@ export interface Game {
   imageUrl: string;
   players: string[];
   betAmount: number;
-  status: 'open' | 'active' | 'completed';
+  status: 'pending' | 'open' | 'active' | 'completed';
   rounds: Round[];
   player1: PlayerWithStringTelegramId;
   player2?: PlayerWithStringTelegramId;
   createdAt: Timestamp;
-  updatedAt: Timestamp | FieldValue; // Обновлено
+  updatedAt: Timestamp | FieldValue;
   finalResult?: string;
+  creatorId: string;
+  currentPlayer: 'player1' | 'player2';
+  pendingBetAmount?: number; // Ставка второго игрока, ожидающая подтверждения
+  isBetAccepted?: boolean;   // Флаг принятия ставки первым игроком
+  totalRounds?: number;      // Общее количество раундов (например, 3)
+  winner?: 'player1' | 'player2' | 'draw' | null; // Победитель игры
 }
 
 export interface Player {
@@ -39,11 +45,7 @@ export interface Character {
   imageUrl: string;
   name: string;
   description: string;
-  // Добавьте другие свойства, если необходимо
 }
-
-
-
 
 export interface GameWithId extends Game {
   id: string;

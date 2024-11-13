@@ -5,7 +5,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 
 interface CreateGameRequest {
   userId: string;
-  telegramId: number;
+  telegramId: string;
   username: string;
   betAmount: number;
 }
@@ -26,22 +26,21 @@ export async function POST(request: Request) {
 
   let { userId, telegramId, username, betAmount } = body;
 
-  // Мокирование данных при отсутствии или некорректности входящих данных
   if (!userId || typeof userId !== 'string') {
-    console.log('Using mock userId');
-    userId = 'mockUser123';
+    console.log('Invalid or missing userId');
+    return NextResponse.json({ message: 'Invalid or missing userId' }, { status: 400 });
   }
-  if (!telegramId || typeof telegramId !== 'number') {
-    console.log('Using mock telegramId');
-    telegramId = 1234567890;
+  if (!telegramId || typeof telegramId !== 'string') {
+    console.log('Invalid or missing telegramId');
+    return NextResponse.json({ message: 'Invalid or missing telegramId' }, { status: 400 });
   }
   if (!username || typeof username !== 'string') {
-    console.log('Using mock username');
-    username = 'mockUser';
+    console.log('Invalid or missing username');
+    return NextResponse.json({ message: 'Invalid or missing username' }, { status: 400 });
   }
   if (!betAmount || typeof betAmount !== 'number') {
-    console.log('Using mock betAmount');
-    betAmount = 10;
+    console.log('Invalid or missing betAmount');
+    return NextResponse.json({ message: 'Invalid or missing betAmount' }, { status: 400 });
   }
 
   console.log('Final Fields:');
@@ -60,13 +59,16 @@ export async function POST(request: Request) {
       imageUrl: '/images/game_placeholder.jpg',
       players: [userId],
       betAmount,
-      status: 'open',
+      status: 'open', // Изменено на 'open'
       rounds: [],
       player1: {
         userId,
         telegramId,
         username,
       },
+      creatorId: userId,
+      currentPlayer: 'player1',
+      totalRounds: 3,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     };

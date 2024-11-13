@@ -18,12 +18,18 @@ const JoinGameButton: React.FC<JoinGameButtonProps> = ({ game }) => {
   const { user } = useAppContext();
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [betAmount, setBetAmount] = useState<number>(game.betAmount);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
   const handleJoinGame = async () => {
     if (!user) {
       setError('Пользователь не авторизован.');
+      return;
+    }
+
+    if (!betAmount || betAmount <= 0) {
+      setError('Пожалуйста, введите корректный размер ставки.');
       return;
     }
 
@@ -41,6 +47,7 @@ const JoinGameButton: React.FC<JoinGameButtonProps> = ({ game }) => {
           userId: user.id,
           telegramId: user.telegramId,
           username: user.username,
+          betAmount, // Добавлено
         }),
       });
 
@@ -74,8 +81,15 @@ const JoinGameButton: React.FC<JoinGameButtonProps> = ({ game }) => {
         <Modal onClose={() => setIsModalOpen(false)}>
           <div className="p-4">
             <h2 className="text-xl font-semibold mb-4">Присоединиться к игре</h2>
-            {error && <p className="text-red-500 mb-2">{error.replace(/"/g, '&quot;')}</p>}
+            {error && <p className="text-red-500 mb-2">{error}</p>}
             <p>Вы уверены, что хотите присоединиться к игре &quot;{game.name}&quot;?</p>
+            <input
+              type="number"
+              placeholder="Размер вашей ставки (ETH)"
+              value={betAmount}
+              onChange={(e) => setBetAmount(Number(e.target.value))}
+              className="w-full p-2 border border-gray-300 rounded mb-4 mt-4"
+            />
             <div className="flex justify-end space-x-4 mt-4">
               <button
                 onClick={() => setIsModalOpen(false)}

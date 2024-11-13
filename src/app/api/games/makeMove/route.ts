@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/firebase/adminApp';
 import { FieldValue } from 'firebase-admin/firestore';
 import { Game, Round } from '@/types';
-import { determineRoundResult } from '@/utils/helpers'; // Убедитесь, что helpers.ts существует
+import { determineRoundResult } from '@/utils/helpers';
 
 interface MakeMoveRequest {
   gameId: string;
@@ -61,6 +61,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Game is not active' }, { status: 400 });
     }
 
+    // Определение, чей сейчас ход
+    const isPlayer1 = gameData.player1.userId === userId;
+    const playerRole = isPlayer1 ? 'player1' : 'player2';
+
+    if (gameData.currentPlayer !== playerRole) {
+      console.error('Not the player\'s turn:', userId);
+      return NextResponse.json({ message: 'Not your turn' }, { status: 403 });
+    }
+
     // Определение текущего раунда
     const currentRoundIndex = gameData.rounds.findIndex(round => !round.result);
     let currentRound: Round | null = null;
@@ -73,12 +82,7 @@ export async function POST(request: Request) {
         player2Move: null,
         result: null,
       };
-      await gameRef.update({
-        rounds: FieldValue.arrayUnion(newRound),
-        updatedAt: FieldValue.serverTimestamp(),
-      });
       currentRound = newRound;
-      console.log('New round created:', newRound);
     } else {
       currentRound = gameData.rounds[currentRoundIndex];
     }
@@ -87,42 +91,74 @@ export async function POST(request: Request) {
       throw new Error('Не удалось определить текущий раунд.');
     }
 
-    // Определение, чей ход
-    const isPlayer1 = gameData.player1.userId === userId;
-    if (isPlayer1) {
+    // Обновление хода игрока
+    if (playerRole === 'player1') {
       currentRound.player1Move = move;
-    } else if (gameData.player2 && gameData.player2.userId === userId) {
-      currentRound.player2Move = move;
     } else {
-      console.error('Игрок не участвует в этой игре:', userId);
-      return NextResponse.json({ message: 'Игрок не участвует в этой игре.' }, { status: 403 });
+      currentRound.player2Move = move;
     }
 
     // Обновление раунда в массиве
     const updatedRounds = [...gameData.rounds];
-    updatedRounds[currentRoundIndex === -1 ? updatedRounds.length - 1 : currentRoundIndex] = currentRound;
+    if (currentRoundIndex === -1) {
+      updatedRounds.push(currentRound);
+    } else {
+      updatedRounds[currentRoundIndex] = currentRound;
+    }
 
     // Проверка, сделали ли оба игрока ход
     if (currentRound.player1Move && currentRound.player2Move) {
-      // Определяем результат раунда с использованием функции из helpers
+      // Определяем результат раунда
       const result = determineRoundResult(currentRound.player1Move, currentRound.player2Move);
       currentRound.result = result;
       updatedRounds[currentRoundIndex === -1 ? updatedRounds.length - 1 : currentRoundIndex] = currentRound;
 
-      // Обновление раундов в Firestore
-      await gameRef.update({
-        rounds: updatedRounds,
-        updatedAt: FieldValue.serverTimestamp(),
-      });
+      // Проверка условия завершения игры
+      if (updatedRounds.length >= (gameData.totalRounds || 3) && currentRound.result) {
+        // Подсчет побед
+        const player1Wins = updatedRounds.filter(round => round.result === 'player1').length;
+        const player2Wins = updatedRounds.filter(round => round.result === 'player2').length;
 
-      console.log(`Round ${currentRound.roundNumber} result: ${result}`);
+        let winner: 'player1' | 'player2' | 'draw' = 'draw';
+        if (player1Wins > player2Wins) {
+          winner = 'player1';
+        } else if (player2Wins > player1Wins) {
+          winner = 'player2';
+        }
+
+        // Обновление статуса игры и победителя
+        await gameRef.update({
+          rounds: updatedRounds,
+          status: 'completed',
+          winner,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        console.log(`Game ${gameId} completed. Winner: ${winner}`);
+      } else {
+        // Обновление currentPlayer
+        const nextPlayer = gameData.currentPlayer === 'player1' ? 'player2' : 'player1';
+
+        // Обновление данных игры
+        await gameRef.update({
+          rounds: updatedRounds,
+          currentPlayer: nextPlayer,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        console.log(`Round ${currentRound.roundNumber} result: ${result}`);
+      }
     } else {
-      // Обновление только текущего раунда
+      // Обновление currentPlayer
+      const nextPlayer = gameData.currentPlayer === 'player1' ? 'player2' : 'player1';
+
+      // Обновление данных игры
       await gameRef.update({
         rounds: updatedRounds,
+        currentPlayer: nextPlayer,
         updatedAt: FieldValue.serverTimestamp(),
       });
-      console.log(`Round ${currentRound.roundNumber} updated with ${isPlayer1 ? 'player1Move' : 'player2Move'}.`);
+      console.log(`Round ${currentRound.roundNumber} updated with ${playerRole}Move.`);
     }
 
     return NextResponse.json({ message: 'Move recorded successfully' }, { status: 200 });

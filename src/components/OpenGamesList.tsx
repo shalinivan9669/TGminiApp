@@ -18,11 +18,11 @@ const OpenGamesList: React.FC = () => {
 
   useEffect(() => {
     const q = query(collection(db, 'games'), where('status', '==', 'open'));
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const games: GameWithId[] = snapshot.docs.map((doc) => {
         const data = doc.data();
 
-        // Преобразуем данные из Firestore в объект типа GameWithId
         const game: GameWithId = {
           id: doc.id,
           name: data.name,
@@ -32,31 +32,24 @@ const OpenGamesList: React.FC = () => {
           betAmount: data.betAmount,
           status: data.status,
           rounds: data.rounds || [],
-          player1: {
-            userId: data.player1.userId,
-            telegramId: data.player1.telegramId,
-            username: data.player1.username,
-            
-          },
-          player2: data.player2
-            ? {
-                userId: data.player2.userId,
-                telegramId: data.player2.telegramId,
-                username: data.player2.username,
- 
-              }
-            : undefined,
+          player1: data.player1,
+          player2: data.player2,
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,
           finalResult: data.finalResult,
+          creatorId: data.creatorId,
+          currentPlayer: 'player1'
         };
         return game;
       });
-      setOpenGames(games);
+
+      // Фильтруем игры на клиенте
+      const filteredGames = games.filter((game) => game.creatorId !== user?.id);
+      setOpenGames(filteredGames);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   return (
     <div>

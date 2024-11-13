@@ -10,14 +10,10 @@ import JoinGameButton from '@/components/Buttons/JoinGameButton';
 import { useAppContext } from '@/app/context/AppContext';
 import { db } from '@/firebase/clientApp';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { Game } from '@/types';
+import { GameWithId } from '@/types';
 import { useRouter } from 'next/navigation';
-
-// Расширенный интерфейс для игр с 'id' и 'filter'
-interface GameWithId extends Game {
-  id: string;
-  filter?: string;
-}
+import GameHistoryList from '@/components/GameHistoryList';
+import ActiveGamesList from '@/components/ActiveGamesList'; // Импортируем компонент активных игр
 
 const Play: React.FC = () => {
   const { activeTab, setActiveTab, selectedFilter, setSelectedFilter, user } = useAppContext();
@@ -37,6 +33,8 @@ const Play: React.FC = () => {
     setLoading(true);
     setError('');
 
+    console.log('Текущий пользователь:', user);
+
     // Подписка на открытые игры (статус 'open')
     const openGamesQuery = query(collection(db, 'games'), where('status', '==', 'open'));
     const unsubscribeOpen = onSnapshot(
@@ -54,15 +52,24 @@ const Play: React.FC = () => {
             rounds: data.rounds || [],
             players: data.players || [],
             finalResult: data.finalResult,
-            filter: data.filter, // Добавлено для фильтрации
+            filter: data.filter,
             player1: data.player1,
             player2: data.player2,
+            creatorId: data.creatorId,
+            currentPlayer: data.currentPlayer,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
-            // Добавьте другие свойства, если необходимо
           };
         });
-        setOpenGames(games);
+
+        console.log('Полученные открытые игры:', games);
+
+        // Исключаем игры, созданные текущим пользователем
+        const filteredGames = games.filter((game) => game.creatorId !== user?.id);
+
+        console.log('Отфильтрованные игры:', filteredGames);
+
+        setOpenGames(filteredGames);
         setLoading(false);
       },
       (err) => {
@@ -76,8 +83,8 @@ const Play: React.FC = () => {
     if (user) {
       const activeGamesQuery = query(
         collection(db, 'games'),
-        where('status', '==', 'active'),
-        where('players', 'array-contains', user.id) // Предполагается, что поле 'players' - массив userId
+        where('status', 'in', ['pending', 'active']),
+        where('players', 'array-contains', user.id)
       );
       const unsubscribeActive = onSnapshot(
         activeGamesQuery,
@@ -94,12 +101,13 @@ const Play: React.FC = () => {
               rounds: data.rounds || [],
               players: data.players || [],
               finalResult: data.finalResult,
-              filter: data.filter, // Добавлено для фильтрации
+              filter: data.filter,
               player1: data.player1,
               player2: data.player2,
+              creatorId: data.creatorId,
+              currentPlayer: data.currentPlayer,
               createdAt: data.createdAt,
               updatedAt: data.updatedAt,
-              // Добавьте другие свойства, если необходимо
             };
           });
           setActiveGames(games);
@@ -133,12 +141,13 @@ const Play: React.FC = () => {
               rounds: data.rounds || [],
               players: data.players || [],
               finalResult: data.finalResult,
-              filter: data.filter, // Добавлено для фильтрации
+              filter: data.filter,
               player1: data.player1,
               player2: data.player2,
+              creatorId: data.creatorId,
+              currentPlayer: data.currentPlayer,
               createdAt: data.createdAt,
               updatedAt: data.updatedAt,
-              // Добавьте другие свойства, если необходимо
             };
           });
           setGameHistory(games);
@@ -173,7 +182,9 @@ const Play: React.FC = () => {
         : activeTab === 'Активные игры'
         ? activeGames
         : gameHistory;
+
     if (selectedFilter === 'Все') return allGames;
+
     // Реализуйте логику фильтрации на основе выбранного фильтра
     return allGames.filter((game) => game.filter === selectedFilter);
   };
@@ -191,25 +202,31 @@ const Play: React.FC = () => {
         {loading && <p>Загрузка игр...</p>}
         {error && <p className="text-red-500">{error}</p>}
         {!loading && !error && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-            {filteredGames.length === 0 ? (
-              <p>Нет игр для отображения.</p>
-            ) : (
-              filteredGames.map((game) => (
-                <div key={game.id} className="border border-gray-300 p-4 rounded-lg shadow">
-                  <CharacterCard
-                    imageUrl={game.imageUrl}
-                    name={game.name}
-                    description={game.description}
-                    betAmount={game.betAmount}
-                    status={game.status}
-                    rounds={game.rounds}
-                  />
-                  {activeTab === 'Поиск' && <JoinGameButton game={game} />}
-                </div>
-              ))
+          <>
+            {activeTab === 'Поиск' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                {filteredGames.length === 0 ? (
+                  <p>Нет открытых игр для отображения.</p>
+                ) : (
+                  filteredGames.map((game) => (
+                    <div key={game.id} className="border border-gray-300 p-4 rounded-lg shadow">
+                      <CharacterCard
+                        imageUrl={game.imageUrl}
+                        name={game.name}
+                        description={game.description}
+                        betAmount={game.betAmount}
+                        status={game.status}
+                        rounds={game.rounds}
+                      />
+                      <JoinGameButton game={game} />
+                    </div>
+                  ))
+                )}
+              </div>
             )}
-          </div>
+            {activeTab === 'Активные игры' && <ActiveGamesList />}
+            {activeTab === 'История игр' && <GameHistoryList games={filteredGames} />}
+          </>
         )}
       </main>
     </div>
