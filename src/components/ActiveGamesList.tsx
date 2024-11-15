@@ -5,7 +5,7 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { useAppContext } from '@/app/context/AppContext';
 import GameRound from '@/components/GameRound';
 import ConfirmJoinButton from '@/components/Buttons/ConfirmJoinButton';
-import { Game as GameType, GameWithId } from '@/types';
+import { GameWithId } from '@/types';
 import { useRouter } from 'next/navigation';
 
 const ActiveGamesList: React.FC = () => {
@@ -33,12 +33,17 @@ const ActiveGamesList: React.FC = () => {
       (snapshot) => {
         const games: GameWithId[] = snapshot.docs.map((doc) => {
           const data = doc.data();
+
+          // Преобразование полей даты
+          const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
+          const updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date();
+
           return {
             id: doc.id,
             name: data.name,
             description: data.description,
             imageUrl: data.imageUrl,
-            players: data.players,
+            players: data.players || [],
             betAmount: data.betAmount,
             status: data.status,
             rounds: data.rounds || [],
@@ -54,11 +59,12 @@ const ActiveGamesList: React.FC = () => {
                   username: data.player2.username,
                 }
               : undefined,
-            createdAt: data.createdAt,
-            updatedAt: data.updatedAt,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
             finalResult: data.finalResult,
             creatorId: data.creatorId,
             currentPlayer: data.currentPlayer,
+            filter: data.filter || '', // Добавляем значение по умолчанию, если необходимо
           };
         });
 
@@ -120,7 +126,7 @@ const ActiveGamesList: React.FC = () => {
                 : game.player1.username;
 
             return (
-              <div key={game.id} className="border border-gray-300 p-4 rounded-lg shadow">
+              <div key={game.id} className="border border-gray-300 p-4 rounded-lg shadow bg-white">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <img
@@ -151,7 +157,6 @@ const ActiveGamesList: React.FC = () => {
                 </div>
                 {/* Отображение текущих раундов или других деталей игры */}
                 <GameRound
-                  key={game.id}
                   game={game}
                   currentPlayer={game.player1.userId === user.id ? 'player1' : 'player2'}
                 />

@@ -20,6 +20,7 @@ export interface Game {
   isBetAccepted?: boolean;   // Флаг принятия ставки первым игроком
   totalRounds?: number;      // Общее количество раундов (например, 3)
   winner?: 'player1' | 'player2' | 'draw' | null; // Победитель игры
+  filter?: string;
 }
 
 export interface Player {
@@ -48,6 +49,7 @@ export interface Character {
 }
 
 export interface GameWithId extends Game {
+   
   id: string;
   player1: PlayerWithStringTelegramId;
   player2?: PlayerWithStringTelegramId;

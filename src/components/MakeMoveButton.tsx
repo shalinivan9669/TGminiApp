@@ -47,7 +47,14 @@ const MakeMoveButton: React.FC<MakeMoveButtonProps> = ({ game, currentPlayerRole
   };
 
   // Проверка, является ли пользователь текущим игроком
-  const isCurrentPlayer = game.currentPlayer === currentPlayerRole && user?.id === game[currentPlayerRole].userId;
+  let isCurrentPlayer = false;
+  if (game.currentPlayer === currentPlayerRole) {
+    if (currentPlayerRole === 'player1') {
+      isCurrentPlayer = user?.id === game.player1.userId;
+    } else if (currentPlayerRole === 'player2' && game.player2) {
+      isCurrentPlayer = user?.id === game.player2.userId;
+    }
+  }
 
   return (
     <div className="flex space-x-4 mt-2">

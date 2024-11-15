@@ -52,13 +52,13 @@ const Play: React.FC = () => {
             rounds: data.rounds || [],
             players: data.players || [],
             finalResult: data.finalResult,
-            filter: data.filter,
+            filter: data.filter, // Теперь это свойство определено
             player1: data.player1,
             player2: data.player2,
             creatorId: data.creatorId,
             currentPlayer: data.currentPlayer,
-            createdAt: data.createdAt,
-            updatedAt: data.updatedAt,
+            createdAt: data.createdAt.toDate(),
+            updatedAt: data.updatedAt.toDate(),
           };
         });
 
@@ -79,7 +79,7 @@ const Play: React.FC = () => {
       }
     );
 
-    // Подписка на активные игры текущего пользователя (статус 'active')
+    // Подписка на активные игры текущего пользователя (статус 'pending', 'active')
     if (user) {
       const activeGamesQuery = query(
         collection(db, 'games'),
@@ -106,8 +106,8 @@ const Play: React.FC = () => {
               player2: data.player2,
               creatorId: data.creatorId,
               currentPlayer: data.currentPlayer,
-              createdAt: data.createdAt,
-              updatedAt: data.updatedAt,
+              createdAt: data.createdAt.toDate(),
+              updatedAt: data.updatedAt.toDate(),
             };
           });
           setActiveGames(games);
@@ -146,8 +146,8 @@ const Play: React.FC = () => {
               player2: data.player2,
               creatorId: data.creatorId,
               currentPlayer: data.currentPlayer,
-              createdAt: data.createdAt,
-              updatedAt: data.updatedAt,
+              createdAt: data.createdAt.toDate(),
+              updatedAt: data.updatedAt.toDate(),
             };
           });
           setGameHistory(games);
@@ -192,24 +192,24 @@ const Play: React.FC = () => {
   const filteredGames = getFilteredGames();
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <main className="flex-grow p-4">
-        <div className="flex justify-between items-center mb-4">
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <main className="flex-grow p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
           <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
           {activeTab === 'Поиск' && <CreateGameButton />}
         </div>
         <Filters options={filters} selectedOption={selectedFilter} onFilterChange={setSelectedFilter} />
-        {loading && <p>Загрузка игр...</p>}
-        {error && <p className="text-red-500">{error}</p>}
+        {loading && <p className="text-center mt-4">Загрузка игр...</p>}
+        {error && <p className="text-red-500 text-center mt-4">{error}</p>}
         {!loading && !error && (
           <>
             {activeTab === 'Поиск' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-4">
                 {filteredGames.length === 0 ? (
-                  <p>Нет открытых игр для отображения.</p>
+                  <p className="text-center sm:text-left">Нет открытых игр для отображения.</p>
                 ) : (
                   filteredGames.map((game) => (
-                    <div key={game.id} className="border border-gray-300 p-4 rounded-lg shadow">
+                    <div key={game.id} className="border border-gray-300 p-4 rounded-lg shadow bg-white">
                       <CharacterCard
                         imageUrl={game.imageUrl}
                         name={game.name}

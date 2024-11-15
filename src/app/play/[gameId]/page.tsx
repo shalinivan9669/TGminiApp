@@ -74,13 +74,29 @@ const PlayGame: React.FC = () => {
     }
   }, [gameId]);
 
-  if (loading) return <div className="flex items-center justify-center h-screen">Загрузка...</div>;
-  if (error) return <div className="text-red-500 text-center p-4">{error}</div>;
-  if (!gameData) return <div className="text-center p-4">Игра не найдена.</div>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-screen">
+        Загрузка...
+      </div>
+    );
+  if (error)
+    return (
+      <div className="text-red-500 text-center p-4">{error}</div>
+    );
+  if (!gameData)
+    return (
+      <div className="text-center p-4">Игра не найдена.</div>
+    );
+
+  // Проверяем, что пользователь определен
+  if (!user) {
+    return <p className="text-center p-4">Пожалуйста, войдите в систему, чтобы участвовать в игре.</p>;
+  }
 
   // Определяем роль текущего пользователя
   let currentPlayerRole: 'player1' | 'player2' | null = null;
-  if (gameData.player1.userId === user?.id) {
+  if (gameData.player1.userId === user.id) {
     currentPlayerRole = 'player1';
   } else if (gameData.player2?.userId === user.id) {
     currentPlayerRole = 'player2';
@@ -97,7 +113,7 @@ const PlayGame: React.FC = () => {
   };
 
   // Если игра в статусе 'pending' и пользователь — создатель, показываем действия подтверждения
-  if (gameData.status === 'pending' && user?.id === gameData.creatorId) {
+  if (gameData.status === 'pending' && user.id === gameData.creatorId) {
     return (
       <div className="relative p-4 sm:p-6">
         {/* Кнопка закрытия */}
@@ -135,6 +151,15 @@ const PlayGame: React.FC = () => {
       {gameData.status === 'completed' && (
         <div className="mt-6">
           <h2 className="text-xl font-semibold mb-2 text-center sm:text-left">Игра завершена!</h2>
+          <p className="text-center sm:text-left mb-4">
+            Победитель:{' '}
+            {gameData.winner === 'draw'
+              ? 'Ничья'
+              : gameData.winner === 'player1'
+              ? gameData.player1.username
+              : gameData.player2?.username}
+          </p>
+          {/* Удалено дублирующее отображение RoundsList */}
         </div>
       )}
     </div>
