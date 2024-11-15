@@ -35,7 +35,21 @@ export async function POST(request: NextRequest) {
     const docRef = await db.collection('collections').add(newCollection);
     console.log('Collection added with ID:', docRef.id);
 
-    return NextResponse.json({ id: docRef.id, ...newCollection }, { status: 201 });
+    // Получаем документ для получения фактического значения createdAt
+    const addedDoc = await docRef.get();
+    const addedData = addedDoc.data();
+
+    if (!addedData) {
+      throw new Error('No data found for the added collection');
+    }
+
+    // Преобразуем Timestamp в Date
+    const createdAt = addedData.createdAt?.toDate() || new Date();
+
+    return NextResponse.json(
+      { id: docRef.id, ...addedData, createdAt },
+      { status: 201 }
+    );
   } catch (error: any) {
     console.error('Error adding collection:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
