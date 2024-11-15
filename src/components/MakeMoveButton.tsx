@@ -36,7 +36,7 @@ const MakeMoveButton: React.FC<MakeMoveButtonProps> = ({ game, currentPlayerRole
         throw new Error(data.message || 'Ошибка при выполнении хода');
       }
 
-      console.log('Ход выполнен:', data);
+      console.log('Ход выполнен успешно:', data);
       // Можно добавить уведомление или обновить состояние
     } catch (err: any) {
       console.error('Ошибка при выполнении хода:', err);

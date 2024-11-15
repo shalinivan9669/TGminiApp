@@ -19,7 +19,7 @@ const GameHistoryList: React.FC<GameHistoryListProps> = ({ games }) => {
         games.map((game) => (
           <div key={game.id} className="border border-gray-300 p-4 rounded-lg shadow mb-4">
             <h3 className="text-lg font-semibold">
-              {game.player1.username} vs {game.player2?.username}
+              {game.player1.username} vs {game.player2?.username || 'Неизвестный игрок'}
             </h3>
             <p>Ставка: {game.betAmount} ETH</p>
             <p>

@@ -1,22 +1,19 @@
 // src/components/ActiveGamesList.tsx
 import React, { useEffect, useState } from 'react';
-import { db } from '@/firebase/clientApp'; // Убедитесь, что используете клиентский SDK
+import { db } from '@/firebase/clientApp'; // Клиентский SDK Firestore
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { useAppContext } from '@/app/context/AppContext';
 import GameRound from '@/components/GameRound';
 import ConfirmJoinButton from '@/components/Buttons/ConfirmJoinButton';
-import { Game as GameType, Player } from '@/types'; // Импортируем необходимые интерфейсы
-
-// Создаём интерфейс GameWithId, добавляя поле 'id'
-interface GameWithId extends GameType {
-  id: string;
-}
+import { Game as GameType, GameWithId } from '@/types';
+import { useRouter } from 'next/navigation';
 
 const ActiveGamesList: React.FC = () => {
   const { user } = useAppContext();
   const [activeGames, setActiveGames] = useState<GameWithId[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
+  const router = useRouter();
 
   useEffect(() => {
     if (!user) {
@@ -27,7 +24,7 @@ const ActiveGamesList: React.FC = () => {
 
     const q = query(
       collection(db, 'games'),
-      where('status', '==', 'active'),
+      where('status', 'in', ['open', 'pending', 'active']),
       where('players', 'array-contains', user.id)
     );
 
@@ -36,8 +33,7 @@ const ActiveGamesList: React.FC = () => {
       (snapshot) => {
         const games: GameWithId[] = snapshot.docs.map((doc) => {
           const data = doc.data();
-
-          const game: GameWithId = {
+          return {
             id: doc.id,
             name: data.name,
             description: data.description,
@@ -53,18 +49,17 @@ const ActiveGamesList: React.FC = () => {
             },
             player2: data.player2
               ? {
-                userId: data.player2.userId,
-                telegramId: String(data.player2.telegramId),
-                username: data.player2.username,
-              }
+                  userId: data.player2.userId,
+                  telegramId: String(data.player2.telegramId),
+                  username: data.player2.username,
+                }
               : undefined,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
             finalResult: data.finalResult,
-            creatorId: '',
-            currentPlayer: 'player1'
+            creatorId: data.creatorId,
+            currentPlayer: data.currentPlayer,
           };
-          return game;
         });
 
         setActiveGames(games);
@@ -79,6 +74,10 @@ const ActiveGamesList: React.FC = () => {
 
     return () => unsubscribe();
   }, [user]);
+
+  const handleConnect = (gameId: string) => {
+    router.push(`/play/${gameId}`);
+  };
 
   if (loading) {
     return (
@@ -122,14 +121,35 @@ const ActiveGamesList: React.FC = () => {
 
             return (
               <div key={game.id} className="border border-gray-300 p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-2">
-                  Игра с {opponentUsername}
-                </h3>
-                <p>Ставка: {game.betAmount} ETH</p>
-                {game.player1.userId === user.id && game.player2 && !game.rounds.length && (
-                  <ConfirmJoinButton game={game} />
-                )}
-                {/* Отображение текущих раундов */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <img
+                      src={game.imageUrl || '/images/game_placeholder.jpg'}
+                      alt="Game"
+                      className="w-16 h-16 object-cover rounded-full mr-4"
+                    />
+                    <div>
+                      <h3 className="text-lg font-semibold">{`Игра с ${opponentUsername}`}</h3>
+                      <p>{`Ставка: ${game.betAmount} ETH`}</p>
+                      <p>{`Статус: ${game.status}`}</p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    {/* Кнопка "Подключиться" */}
+                    <button
+                      onClick={() => handleConnect(game.id)}
+                      className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
+                    >
+                      Подключиться
+                    </button>
+
+                    {/* Если игра находится в статусе 'pending', показываем кнопки подтверждения/отклонения */}
+                    {game.status === 'pending' && game.creatorId === user.id && (
+                      <ConfirmJoinButton game={game} />
+                    )}
+                  </div>
+                </div>
+                {/* Отображение текущих раундов или других деталей игры */}
                 <GameRound
                   key={game.id}
                   game={game}

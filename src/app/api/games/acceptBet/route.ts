@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/firebase/adminApp';
 import { FieldValue } from 'firebase-admin/firestore';
+import { Game } from '@/types';
 
 interface AcceptBetRequest {
   gameId: string;
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Game not found' }, { status: 404 });
     }
 
-    const gameData = gameSnap.data() as any;
+    const gameData = gameSnap.data() as Game;
     console.log('Game Data:', JSON.stringify(gameData, null, 2));
 
     if (gameData.status !== 'pending') {
@@ -45,21 +46,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Game is not pending' }, { status: 400 });
     }
 
-    // Обновляем ставку и статус игры
+    if (!gameData.player2) {
+      console.log('Game does not have a second player');
+      return NextResponse.json({ message: 'Game does not have a second player' }, { status: 400 });
+    }
+
+    // Обновление ставки и статуса игры на 'active'
     await gameRef.update({
       betAmount: gameData.pendingBetAmount,
       isBetAccepted: true,
       status: 'active',
-      pendingBetAmount: FieldValue.delete(),
       updatedAt: FieldValue.serverTimestamp(),
+      pendingBetAmount: FieldValue.delete(),
     });
 
-    console.log('Bet accepted and game is now active');
+    console.log('Bet accepted. Game is now active.');
 
-    // Отправить уведомление игроку 2 о принятии ставки (опционально)
-    // Ваш код для уведомления
+    // Опционально: отправка уведомлений игрокам
 
-    return NextResponse.json({ message: 'Bet accepted' }, { status: 200 });
+    return NextResponse.json({ message: 'Bet accepted. Game is now active.' }, { status: 200 });
   } catch (error: any) {
     console.error('Error accepting bet:', error);
     return NextResponse.json({ message: 'Internal server error', error: error.message }, { status: 500 });

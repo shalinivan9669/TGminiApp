@@ -57,9 +57,9 @@ export async function POST(request: Request) {
       name: `Игра от ${username}`,
       description: `Ставка: ${betAmount} ETH`,
       imageUrl: '/images/game_placeholder.jpg',
-      players: [userId],
+      players: [userId], // Добавляем идентификатор создателя в список игроков
       betAmount,
-      status: 'open', // Изменено на 'open'
+      status: 'open',
       rounds: [],
       player1: {
         userId,

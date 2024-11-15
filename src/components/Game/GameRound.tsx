@@ -1,140 +1,62 @@
-// src/components/GameRound.tsx
-import React, { useState } from 'react';
-import { db } from '@/firebase/clientApp'; // Используем клиентский SDK
-import { doc, updateDoc, serverTimestamp, getDoc, FieldValue } from 'firebase/firestore';
-import { useAppContext } from '@/app/context/AppContext';
-import { GameWithId } from '@/types'; // Импортируем интерфейс GameWithId
+// src/components/RoundsList.tsx
+'use client';
 
-interface GameRoundProps {
-  game: GameWithId;
-  currentPlayer: 'player1' | 'player2';
+import React from 'react';
+import { Round } from '@/types';
+
+interface RoundsListProps {
+  rounds: Round[];
+  currentPlayerRole?: 'player1' | 'player2';
 }
 
-const GameRound: React.FC<GameRoundProps> = ({ game, currentPlayer }) => {
-  const { user } = useAppContext();
-  const [move, setMove] = useState<'rock' | 'paper' | 'scissors' | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>('');
-
-  const handleMove = async () => {
-    if (!move) {
-      setError('Пожалуйста, выберите ход.');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
-    try {
-      // Находим индекс первого незавершенного раунда
-      const roundIndex = game.rounds.findIndex(round => !round.result);
-      if (roundIndex === -1) {
-        setError('Все раунды уже завершены.');
-        return;
-      }
-
-      const gameRef = doc(db, 'games', game.id);
-      const moveField = currentPlayer === 'player1' ? 'player1Move' : 'player2Move';
-      
-      // Обновляем ход текущего игрока
-      const updateData: Partial<GameWithId> & { updatedAt: FieldValue } = {
-        [`rounds.${roundIndex}.${moveField}`]: move,
-        updatedAt: serverTimestamp(),
-      };
-
-      await updateDoc(gameRef, updateData);
-
-      // Получаем обновленные данные игры
-      const gameSnap = await getDoc(gameRef);
-      if (!gameSnap.exists()) {
-        throw new Error('Игра не существует.');
-      }
-      const updatedGame = gameSnap.data() as GameWithId;
-      const currentRound = updatedGame.rounds[roundIndex];
-
-      // Если оба игрока сделали ход, определяем результат
-      if (currentRound.player1Move && currentRound.player2Move) {
-        const result = determineRoundResult(currentRound.player1Move, currentRound.player2Move);
-        await updateDoc(gameRef, {
-          [`rounds.${roundIndex}.result`]: result,
-          updatedAt: serverTimestamp(),
-        });
-
-        // Отправка уведомлений о результате раунда
-        await fetch('/api/notifications/notifyRoundResult', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ gameId: game.id, roundNumber: roundIndex + 1, result }),
-        });
-      }
-    } catch (err) {
-      console.error('Ошибка при внесении хода:', err);
-      setError('Не удалось внести ход. Попробуйте ещё раз.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Функция для определения результата раунда
-  const determineRoundResult = (
-    p1: 'rock' | 'paper' | 'scissors',
-    p2: 'rock' | 'paper' | 'scissors'
-  ): 'player1' | 'player2' | 'draw' => {
-    if (p1 === p2) return 'draw';
-    if (
-      (p1 === 'rock' && p2 === 'scissors') ||
-      (p1 === 'paper' && p2 === 'rock') ||
-      (p1 === 'scissors' && p2 === 'paper')
-    ) {
-      return 'player1';
-    }
-    return 'player2';
-  };
-
-  // Определяем номер текущего раунда для отображения
-  const currentRoundNumber = game.rounds.findIndex(round => !round.result) + 1;
+const RoundsList: React.FC<RoundsListProps> = ({ rounds, currentPlayerRole }) => {
+  if (rounds.length === 0) {
+    return <p className="text-center sm:text-left">Пока нет раундов.</p>;
+  }
 
   return (
-    <div className="p-4 border rounded-lg mt-4">
-      <h3 className="text-lg font-semibold mb-2">Раунд {currentRoundNumber}</h3>
-      {error && <p className="text-red-500 mb-2">{error}</p>}
-      <div className="flex space-x-4 mb-4">
-        <button
-          onClick={() => setMove('rock')}
-          className={`py-2 px-4 rounded ${
-            move === 'rock' ? 'bg-blue-500 text-white' : 'bg-gray-200'
-          }`}
-        >
-          Камень
-        </button>
-        <button
-          onClick={() => setMove('paper')}
-          className={`py-2 px-4 rounded ${
-            move === 'paper' ? 'bg-blue-500 text-white' : 'bg-gray-200'
-          }`}
-        >
-          Бумага
-        </button>
-        <button
-          onClick={() => setMove('scissors')}
-          className={`py-2 px-4 rounded ${
-            move === 'scissors' ? 'bg-blue-500 text-white' : 'bg-gray-200'
-          }`}
-        >
-          Ножницы
-        </button>
+    <div className="mt-4">
+      <h2 className="text-xl font-semibold mb-4 text-center sm:text-left">Раунды</h2>
+      <div className="space-y-4">
+        {rounds.map((round) => (
+          <div
+            key={round.roundNumber}
+            className="border border-gray-300 p-4 rounded-lg shadow-sm bg-white"
+          >
+            <p className="font-semibold mb-2 text-center sm:text-left">{`Раунд ${round.roundNumber}`}</p>
+            <div className="flex flex-col sm:flex-row sm:justify-between">
+              <div className="mb-2 sm:mb-0">
+                <p>
+                  <span className="font-medium">Ваш ход:</span>{' '}
+                  {currentPlayerRole === 'player1'
+                    ? round.player1Move || 'Не сделан'
+                    : round.player2Move || 'Не сделан'}
+                </p>
+              </div>
+              <div>
+                <p>
+                  <span className="font-medium">Ход соперника:</span>{' '}
+                  {currentPlayerRole === 'player1'
+                    ? round.player2Move || 'Не сделан'
+                    : round.player1Move || 'Не сделан'}
+                </p>
+              </div>
+            </div>
+            <p className="mt-2">
+              <span className="font-medium">Результат:</span>{' '}
+              {round.result
+                ? round.result === 'draw'
+                  ? 'Ничья'
+                  : round.result === 'player1'
+                  ? 'Победил игрок 1'
+                  : 'Победил игрок 2'
+                : 'Ожидание результата'}
+            </p>
+          </div>
+        ))}
       </div>
-      <button
-        onClick={handleMove}
-        disabled={loading || !move}
-        className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded"
-      >
-        {loading ? 'Подтверждаю...' : 'Подтвердить ход'}
-      </button>
     </div>
   );
 };
 
-export default GameRound;
+export default RoundsList;

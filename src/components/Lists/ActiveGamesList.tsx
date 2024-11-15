@@ -1,10 +1,16 @@
 // src/components/ActiveGamesList.tsx
 import React, { useEffect, useState } from 'react';
-import { db } from '@//firebase/clientApp';
+import { db } from '@/firebase/clientApp'; // Убедитесь, что используете клиентский SDK
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { useAppContext } from '@/app/context/AppContext';
-import { GameWithId } from '@/types';
-import PendingGameActions from '@/components/PendingGameActions/PendingGameActions'; // Импортируем новый компонент
+import GameRound from '@/components/GameRound';
+import ConfirmJoinButton from '@/components/Buttons/ConfirmJoinButton';
+import { Game as GameType } from '@/types'; // Импортируйте необходимые интерфейсы
+
+// Создаём интерфейс GameWithId, добавляя поле 'id'
+interface GameWithId extends GameType {
+  id: string;
+}
 
 const ActiveGamesList: React.FC = () => {
   const { user } = useAppContext();
@@ -19,11 +25,9 @@ const ActiveGamesList: React.FC = () => {
       return;
     }
 
-    console.log('Current User ID:', user.id);
-
     const q = query(
       collection(db, 'games'),
-      where('status', 'in', ['pending', 'active']),
+      where('status', 'in', ['open', 'pending', 'active']),
       where('players', 'array-contains', user.id)
     );
 
@@ -44,30 +48,24 @@ const ActiveGamesList: React.FC = () => {
             rounds: data.rounds || [],
             player1: {
               userId: data.player1.userId,
-              telegramId: data.player1.telegramId,
+              telegramId: String(data.player1.telegramId),
               username: data.player1.username,
             },
             player2: data.player2
               ? {
                   userId: data.player2.userId,
-                  telegramId: data.player2.telegramId,
+                  telegramId: String(data.player2.telegramId),
                   username: data.player2.username,
                 }
               : undefined,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
             finalResult: data.finalResult,
-            creatorId: data.creatorId,
-            currentPlayer: data.currentPlayer,
-            pendingBetAmount: data.pendingBetAmount,
-            isBetAccepted: data.isBetAccepted,
-            totalRounds: data.totalRounds,
-            winner: data.winner,
+            creatorId: data.creatorId, // Исправлено
+            currentPlayer: data.currentPlayer, // Исправлено
           };
           return game;
         });
-
-        console.log('Active games fetched:', games);
 
         setActiveGames(games);
         setLoading(false);
@@ -119,7 +117,7 @@ const ActiveGamesList: React.FC = () => {
           {activeGames.map((game) => {
             const opponentUsername =
               game.player1.userId === user.id
-                ? game.player2?.username || 'Ожидание второго игрока'
+                ? game.player2?.username || 'Неизвестный игрок'
                 : game.player1.username;
 
             return (
@@ -128,22 +126,16 @@ const ActiveGamesList: React.FC = () => {
                   Игра с {opponentUsername}
                 </h3>
                 <p>Ставка: {game.betAmount} ETH</p>
-                {/* Отображение действий для игры в статусе 'pending' */}
-                {game.status === 'pending' && game.creatorId === user.id && (
-                  <PendingGameActions game={game} />
+                {game.player1.userId === user.id && game.player2 && !game.rounds.length && (
+                  <ConfirmJoinButton game={game} />
                 )}
-                {/* Дополнительные элементы управления для активных игр */}
-                {game.status === 'active' && (
-                  <button
-                    onClick={() => {
-                      // Перейти к странице игры
-                      window.location.href = `/play/${game.id}`;
-                    }}
-                    className="mt-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
-                  >
-                    Перейти к игре
-                  </button>
-                )}
+                {/* Отображение текущих раундов */}
+                <GameRound
+                  key={game.id}
+                  game={game}
+                  currentPlayer={game.player1.userId === user.id ? 'player1' : 'player2'}
+                />
+                {/* Дополнительные элементы управления */}
               </div>
             );
           })}
